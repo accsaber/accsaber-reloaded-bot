@@ -2,6 +2,7 @@ import {
   Client,
   Collection,
   GatewayIntentBits,
+  Partials,
   type ChatInputCommandInteraction,
   type SlashCommandBuilder,
   type SlashCommandOptionsOnlyBuilder,
@@ -17,7 +18,12 @@ export class ArBot extends Client {
 
   constructor() {
     super({
-      intents: [GatewayIntentBits.Guilds],
+      intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.GuildMembers,
+      ],
+      partials: [Partials.Message, Partials.Reaction, Partials.User],
     });
   }
 }

@@ -1,6 +1,7 @@
 import type { ArBot } from "../client.js";
-import ready from "./ready.js";
 import interactionCreate from "./interaction-create.js";
+import { messageReactionAdd, messageReactionRemove } from "./reaction-roles.js";
+import ready from "./ready.js";
 
 interface BotEvent {
   name: string;
@@ -9,7 +10,7 @@ interface BotEvent {
   execute: (...args: any[]) => void | Promise<void>;
 }
 
-const events: BotEvent[] = [ready, interactionCreate];
+const events: BotEvent[] = [ready, interactionCreate, messageReactionAdd, messageReactionRemove];
 
 export function registerEvents(client: ArBot): void {
   for (const event of events) {

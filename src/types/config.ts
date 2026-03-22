@@ -12,6 +12,18 @@ export interface LevelTierRoles {
   ascendant: string;
 }
 
+export interface ReactionRoleEntry {
+  emoji: string;
+  roleId: string;
+  label: string;
+}
+
+export interface ReactionRolesConfig {
+  channelId: string;
+  messageId?: string;
+  roles: Record<string, ReactionRoleEntry>;
+}
+
 export interface Config {
   clientId: string;
   guildId: string;
@@ -24,4 +36,5 @@ export interface Config {
     player: string;
     levelTiers: LevelTierRoles;
   };
+  reactionRoles?: ReactionRolesConfig;
 }

@@ -21,5 +21,25 @@
       "mythic": "",
       "ascendant": ""
     }
+  },
+  "reactionRoles": {
+    "channelId": "",
+    "roles": {
+      "updates": {
+        "emoji": "📢",
+        "roleId": "",
+        "label": "Site Updates"
+      },
+      "devFeeds": {
+        "emoji": "🛠️",
+        "roleId": "",
+        "label": "Dev Updates"
+      },
+      "rankingUpdates": {
+        "emoji": "🗺️",
+        "roleId": "",
+        "label": "Ranking Updates"
+      }
+    }
   }
 }
