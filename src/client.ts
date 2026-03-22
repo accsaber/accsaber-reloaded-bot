@@ -21,7 +21,6 @@ export class ArBot extends Client {
       intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessageReactions,
-        GatewayIntentBits.GuildMembers,
       ],
       partials: [Partials.Message, Partials.Reaction, Partials.User],
     });
