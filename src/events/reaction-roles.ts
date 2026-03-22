@@ -24,7 +24,7 @@ async function resolveReaction(reaction: MessageReaction | PartialMessageReactio
 export async function publishRoleMessage(client: ArBot): Promise<void> {
   const rc = config.reactionRoles;
   if (!rc || !rc.channelId) {
-    console.warn("[ReactionRoles] No reactionRoles config or channelId — skipping");
+    console.warn("[ReactionRoles] No reactionRoles config or channelId - skipping");
     return;
   }
 
@@ -36,14 +36,14 @@ export async function publishRoleMessage(client: ArBot): Promise<void> {
   }
 
   const lines = Object.values(rc.roles).map(
-    (r) => `${r.emoji}  —  **${r.label}**`
+    (r) => `${r.emoji}  -  **${r.label}**`
   );
 
   const embed = new EmbedBuilder()
     .setColor(Colors.category.overall)
     .setTitle("Role Selection")
     .setDescription(
-      "React to this message to receive notification roles.\nRemove your reaction to lose the role.\n\n" +
+      "React to this message to receive server roles.\nRemove your reaction to lose the role.\n\n" +
       lines.join("\n")
     );
 
