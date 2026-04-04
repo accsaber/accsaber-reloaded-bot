@@ -305,8 +305,10 @@ export async function renderProfileCard(data: ProfileCardData): Promise<Buffer> 
   ctx.fillText("TOP SCORES", statsStartX, scoresY);
   ctx.letterSpacing = "0px";
 
-  const scoreLineH = 40;
+  const coverSize = 32;
+  const scoreLineH = 42;
   const scoreStartY = scoresY + 26;
+  const textOffsetX = 28 + coverSize + 8;
   const scoreMaxW = cardW - 64;
 
   for (let i = 0; i < data.topScores.length && i < 5; i++) {
@@ -320,27 +322,43 @@ export async function renderProfileCard(data: ProfileCardData): Promise<Buffer> 
     const scoreCatColor = CATEGORY_HEX[data.categoryIdToCode[score.categoryId]] ?? accent;
     ctx.font = `700 14px ${MONO}`;
     ctx.fillStyle = scoreCatColor;
-    ctx.fillText(`${i + 1}.`, statsStartX, sy);
+    ctx.fillText(`${i + 1}.`, statsStartX, sy + 10);
+
+    const coverX = statsStartX + 28;
+    const coverY = sy + 2;
+    drawRoundedRect(ctx, coverX, coverY, coverSize, coverSize, 4, BG_OVERLAY);
+    if (score.coverUrl) {
+      try {
+        const coverImg = await fetchImage(score.coverUrl);
+        ctx.save();
+        roundRect(ctx, coverX, coverY, coverSize, coverSize, 4);
+        ctx.clip();
+        ctx.drawImage(coverImg, coverX, coverY, coverSize, coverSize);
+        ctx.restore();
+      } catch { /* fallback bg */ }
+    }
+
+    const txStart = statsStartX + textOffsetX;
 
     ctx.font = `500 14px ${SANS}`;
     ctx.fillStyle = TEXT_PRIMARY;
-    const maxSongW = scoreMaxW - 340;
+    const maxSongW = scoreMaxW - textOffsetX - 300;
     let songText = `${score.songName} `;
     while (ctx.measureText(songText).width > maxSongW && songText.length > 10) {
       songText = songText.slice(0, -4) + "...";
     }
-    ctx.fillText(songText, statsStartX + 28, sy);
+    ctx.fillText(songText, txStart, sy);
 
     const songW = ctx.measureText(songText).width;
     ctx.font = `500 11px ${MONO}`;
     ctx.fillStyle = TEXT_SECONDARY;
-    ctx.fillText(`[${diff}]`, statsStartX + 28 + songW + 6, sy + 2);
+    ctx.fillText(`[${diff}]`, txStart + songW + 6, sy + 2);
 
     ctx.font = `400 11px ${SANS}`;
     ctx.fillStyle = TEXT_TERTIARY;
     ctx.fillText(
       `${score.songAuthor} · Mapped by ${score.mapAuthor}`,
-      statsStartX + 28, sy + 18
+      txStart, sy + 18
     );
 
     const rightText = `${acc}%  |  ${ap}ap${isFC ? "  FC" : ""}`;
@@ -368,7 +386,7 @@ export async function renderProfileCard(data: ProfileCardData): Promise<Buffer> 
     ctx.strokeStyle = BG_OVERLAY;
     ctx.lineWidth = 1;
     const diffW = ctx.measureText(`[${diff}]`).width;
-    const leaderStart = statsStartX + 28 + songW + 6 + diffW + 10;
+    const leaderStart = txStart + songW + 6 + diffW + 10;
     const leaderEnd = rightX - 10;
     if (leaderEnd > leaderStart) {
       ctx.beginPath();
