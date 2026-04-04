@@ -1,3 +1,74 @@
+export interface MilestoneThresholdConfig {
+  ap: number;
+  enabled: boolean;
+  messageTemplate: string;
+  embedColor?: string;
+}
+
+export interface FirstMilestoneConfig {
+  enabled: boolean;
+  embedColor: string;
+  thresholds: MilestoneThresholdConfig[];
+}
+
+export interface AllScoresAboveConfig {
+  enabled: boolean;
+  apThreshold: number;
+  messageTemplate: string;
+  embedColor: string;
+}
+
+export interface UnderdogConfig {
+  enabled: boolean;
+  mapRankThreshold: number;
+  minCategoryRank: number;
+  messageTemplate: string;
+  embedColor: string;
+}
+
+export interface RankOneConfig {
+  enabled: boolean;
+  messageTemplate: string;
+  embedColor: string;
+}
+
+export interface TopRankThresholdConfig {
+  rank: number;
+  enabled: boolean;
+  messageTemplate: string;
+  embedColor?: string;
+}
+
+export interface TopRankConfig {
+  enabled: boolean;
+  embedColor: string;
+  thresholds: TopRankThresholdConfig[];
+}
+
+export interface StreakCategoryConfig {
+  categoryCode: string;
+  threshold: number;
+}
+
+export interface StreakConfig {
+  enabled: boolean;
+  categoryThresholds: StreakCategoryConfig[];
+  messageTemplate: string;
+  embedColor: string;
+}
+
+export interface ScoreFeedConfig {
+  channelId: string;
+  wsUrl?: string;
+  reconnectIntervalMs?: number;
+  firstMilestone: FirstMilestoneConfig;
+  allScoresAbove: AllScoresAboveConfig;
+  underdog: UnderdogConfig;
+  rankOne: RankOneConfig;
+  topRank: TopRankConfig;
+  streak: StreakConfig;
+}
+
 export interface LevelTierRoles {
   newcomer: string;
   apprentice: string;
@@ -37,4 +108,5 @@ export interface Config {
     levelTiers: LevelTierRoles;
   };
   reactionRoles?: ReactionRolesConfig;
+  scoreFeed?: ScoreFeedConfig;
 }

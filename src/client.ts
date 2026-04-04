@@ -7,6 +7,7 @@ import {
   type SlashCommandBuilder,
   type SlashCommandOptionsOnlyBuilder,
 } from "discord.js";
+import type { ScoreWebSocket } from "./services/score-ws.js";
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
@@ -15,6 +16,7 @@ export interface Command {
 
 export class ArBot extends Client {
   commands = new Collection<string, Command>();
+  scoreWs?: ScoreWebSocket;
 
   constructor() {
     super({
