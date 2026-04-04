@@ -120,7 +120,7 @@ async function fetchImage(url: string): Promise<ReturnType<typeof loadImage>> {
 }
 
 const W = 900;
-const H = 570;
+const H = 600;
 
 export async function renderProfileCard(data: ProfileCardData): Promise<Buffer> {
   registerFonts();
@@ -356,6 +356,12 @@ export async function renderProfileCard(data: ProfileCardData): Promise<Buffer> 
       ctx.fillStyle = SUCCESS;
       ctx.fillText("FC", fcX, sy + 1);
     }
+
+    const wapText = `(${score.weightedAp.toFixed(2)} weighted)`;
+    ctx.font = `400 11px ${MONO}`;
+    const wapW = ctx.measureText(wapText).width;
+    ctx.fillStyle = TEXT_TERTIARY;
+    ctx.fillText(wapText, cardX + cardW - 32 - wapW, sy + 18);
 
     ctx.save();
     ctx.setLineDash([2, 4]);
