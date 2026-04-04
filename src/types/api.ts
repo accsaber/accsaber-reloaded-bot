@@ -69,6 +69,19 @@ export interface UserCategoryStatisticsResponse {
   createdAt: string;
 }
 
+export interface StatsDiffResponse {
+  categoryId: string;
+  rankingDiff: number;
+  countryRankingDiff: number;
+  apDiff: number;
+  rankedPlaysDiff: number;
+  averageAccDiff: number;
+  averageApDiff: number;
+  scoreXpDiff: number;
+  from: string;
+  to: string;
+}
+
 export interface DiscordLinkResponse {
   discordId: string;
   userId: string;

@@ -1,10 +1,10 @@
 import { type Client, type EmbedBuilder, type TextChannel } from "discord.js";
 import { getCategoryCodeById, getCategoryNameById } from "../api/categories.js";
-import { getUserScores } from "../api/scores.js";
-import { getUserCategoryStatistics } from "../api/statistics.js";
+import { getMapLeaderboard, getUserScores } from "../api/scores.js";
+import { getUserCategoryStatistics, getUserStatsDiff } from "../api/statistics.js";
 import { config } from "../config.js";
 import type { ScoreResponse } from "../types/api.js";
-import type { ScoreFeedConfig } from "../types/config.js";
+import type { ScoreFeedConfig, TopRankCategoryConfig } from "../types/config.js";
 import { buildFeedEmbed, parseHexColor } from "../utils/score-feed-embeds.js";
 import { renderTemplate } from "../utils/templates.js";
 
@@ -37,6 +37,7 @@ export class ScoreFeed {
   private readonly client: Client;
   private readonly cfg: ScoreFeedConfig;
   private channel: TextChannel | null = null;
+  private readonly topRankAnnounced = new Set<string>();
 
   constructor(client: Client) {
     this.client = client;
@@ -56,6 +57,7 @@ export class ScoreFeed {
 
   async handleScore(score: ScoreResponse): Promise<void> {
     const checks: Promise<EmbedBuilder | null>[] = [];
+    const multi: Promise<EmbedBuilder[]>[] = [];
 
     if (this.cfg.firstMilestone.enabled) {
       checks.push(this.checkFirstMilestone(score));
@@ -66,24 +68,45 @@ export class ScoreFeed {
     if (this.cfg.underdog.enabled) {
       checks.push(this.checkUnderdog(score));
     }
-    if (this.cfg.rankOne.enabled) {
-      checks.push(this.checkRankOne(score));
-    }
     if (this.cfg.topRank.enabled) {
-      checks.push(this.checkTopRank(score));
-    }
-    if (this.cfg.streak.enabled) {
-      checks.push(this.checkStreak(score));
+      multi.push(this.checkTopRank(score));
     }
 
-    const results = await Promise.allSettled(checks);
+    let rankOneEmbed: EmbedBuilder | null = null;
+    if (this.cfg.rankOne.enabled) {
+      rankOneEmbed = await this.checkRankOne(score);
+    }
+
+    const [checkResults, multiResults] = await Promise.all([
+      Promise.allSettled(checks),
+      Promise.allSettled(multi),
+    ]);
+
     const embeds: EmbedBuilder[] = [];
 
-    for (const result of results) {
+    if (rankOneEmbed) embeds.push(rankOneEmbed);
+
+    for (const result of checkResults) {
       if (result.status === "fulfilled" && result.value) {
         embeds.push(result.value);
       } else if (result.status === "rejected") {
         console.error("[ScoreFeed] Trigger check failed:", result.reason);
+      }
+    }
+    for (const result of multiResults) {
+      if (result.status === "fulfilled") {
+        embeds.push(...result.value);
+      } else {
+        console.error("[ScoreFeed] Trigger check failed:", result.reason);
+      }
+    }
+
+    if (!rankOneEmbed && this.cfg.streak.enabled) {
+      try {
+        const streakEmbed = await this.checkStreak(score);
+        if (streakEmbed) embeds.push(streakEmbed);
+      } catch (err) {
+        console.error("[ScoreFeed] Trigger check failed:", err);
       }
     }
 
@@ -143,6 +166,7 @@ export class ScoreFeed {
       score,
       color,
       title: renderTemplate(matchedThreshold.messageTemplate, vars),
+      categoryName: category.name,
       linkTarget: "map",
     });
   }
@@ -160,6 +184,7 @@ export class ScoreFeed {
       score,
       color: parseHexColor(allScoresAbove.embedColor),
       title: renderTemplate(allScoresAbove.messageTemplate, vars),
+      categoryName: category.name,
       linkTarget: "map",
     });
   }
@@ -187,6 +212,7 @@ export class ScoreFeed {
       score,
       color: parseHexColor(underdog.embedColor),
       title: renderTemplate(underdog.messageTemplate, vars),
+      categoryName: category.name,
       linkTarget: "map",
       extraInfo: `Category rank: \`#${stats.ranking}\``,
     });
@@ -200,39 +226,113 @@ export class ScoreFeed {
     const category = await resolveCategory(score.categoryId);
     const vars = commonVars(score, category.name);
 
+    let extraInfo: string | undefined;
+    const leaderboard = await getMapLeaderboard(score.mapDifficultyId, {
+      page: 0,
+      size: 2,
+      sort: "score,desc",
+    });
+    const previous = leaderboard.content.find(
+      (s) => s.rank === 2 && s.userId !== score.userId
+    );
+    if (previous) {
+      extraInfo = `Sniped **${previous.userName}** who had \`${previous.ap.toFixed(2)} AP\` (\`${(previous.accuracy * 100).toFixed(2)}%\`)`;
+    }
+
     return buildFeedEmbed({
       score,
       color: parseHexColor(this.cfg.rankOne.embedColor),
       title: renderTemplate(this.cfg.rankOne.messageTemplate, vars),
+      categoryName: category.name,
       linkTarget: "profile",
+      thumbnail: "avatar",
+      extraInfo,
     });
   }
 
-  private async checkTopRank(
-    score: ScoreResponse
+  private async checkTopRank(score: ScoreResponse): Promise<EmbedBuilder[]> {
+    const { topRank } = this.cfg;
+    const scoreCategory = await resolveCategory(score.categoryId);
+
+    const categoriesToCheck = topRank.categories.filter(
+      (c) => c.categoryCode === scoreCategory.code || c.categoryCode === "overall"
+    );
+
+    const results = await Promise.all(
+      categoriesToCheck.map((cat) => this.checkTopRankForCategory(score, cat))
+    );
+
+    return results.filter((e): e is EmbedBuilder => e !== null);
+  }
+
+  private async checkTopRankForCategory(
+    score: ScoreResponse,
+    catConfig: TopRankCategoryConfig
   ): Promise<EmbedBuilder | null> {
     const { topRank } = this.cfg;
 
-    const sorted = topRank.thresholds
-      .filter((t) => t.enabled && score.rank <= t.rank)
+    const [stats, diff] = await Promise.all([
+      getUserCategoryStatistics(score.userId, catConfig.categoryCode),
+      getUserStatsDiff(score.userId, catConfig.categoryCode),
+    ]);
+
+    const currentRank = stats.ranking;
+    const previousRank = diff ? currentRank - diff.rankingDiff : currentRank;
+    if (currentRank === previousRank) return null;
+
+    const catName = catConfig.categoryCode === "overall"
+      ? "Overall"
+      : (await getCategoryNameById(stats.categoryId)) ?? catConfig.categoryCode;
+    const color = parseHexColor(catConfig.embedColor);
+
+    if (currentRank <= topRank.detailThreshold) {
+      const key = `${score.userId}:${catConfig.categoryCode}:detail:${currentRank}`;
+      if (this.topRankAnnounced.has(key)) return null;
+      this.topRankAnnounced.add(key);
+
+      const vars = {
+        ...commonVars(score, catName),
+        categoryRank: currentRank,
+        previousRank,
+        categoryName: catName,
+      };
+
+      return buildFeedEmbed({
+        score,
+        color,
+        title: renderTemplate(topRank.detailMessageTemplate, vars),
+        categoryName: catName,
+        linkTarget: "profile",
+        thumbnail: "avatar",
+        extraInfo: `Moved from \`#${previousRank}\` to \`#${currentRank}\` in **${catName}**`,
+      });
+    }
+
+    const crossed = topRank.thresholds
+      .filter((t) => t.enabled && currentRank <= t.rank && previousRank > t.rank)
       .sort((a, b) => a.rank - b.rank);
 
-    if (sorted.length === 0) return null;
+    if (crossed.length === 0) return null;
 
-    const best = sorted[0];
+    const best = crossed[0];
+    const key = `${score.userId}:${catConfig.categoryCode}:${best.rank}`;
+    if (this.topRankAnnounced.has(key)) return null;
+    this.topRankAnnounced.add(key);
 
-    const category = await resolveCategory(score.categoryId);
     const vars = {
-      ...commonVars(score, category.name),
+      ...commonVars(score, catName),
       topRank: best.rank,
+      categoryRank: currentRank,
+      categoryName: catName,
     };
-    const color = parseHexColor(best.embedColor ?? topRank.embedColor);
 
     return buildFeedEmbed({
       score,
       color,
       title: renderTemplate(best.messageTemplate, vars),
+      categoryName: catName,
       linkTarget: "profile",
+      thumbnail: "avatar",
     });
   }
 
@@ -255,8 +355,8 @@ export class ScoreFeed {
       score,
       color: parseHexColor(streak.embedColor),
       title: renderTemplate(streak.messageTemplate, vars),
+      categoryName: category.name,
       linkTarget: "map",
-      extraInfo: `115 streak: \`${score.streak115}\``,
     });
   }
 }

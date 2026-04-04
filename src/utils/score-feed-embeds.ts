@@ -41,7 +41,7 @@ function buildLinks(score: ScoreResponse): string {
   ];
   if (score.blScoreId) {
     parts.push(
-      `[Replay](https://replay.beatleader.xyz/?scoreId=${score.blScoreId})`
+      `[Replay](https://replay.beatleader.com/?scoreId=${score.blScoreId})`
     );
   }
   return parts.join(" | ");
@@ -51,39 +51,55 @@ function songLine(score: ScoreResponse): string {
   return `${score.songAuthor} - **${score.songName}** [${formatDifficulty(score.difficulty)}] (${score.mapAuthor})`;
 }
 
-function fcLine(score: ScoreResponse): string {
-  if (score.misses === 0 && score.badCuts === 0) return "**FC**";
-  const parts: string[] = [];
-  if (score.misses > 0) parts.push(`${score.misses}x misses`);
-  if (score.badCuts > 0) parts.push(`${score.badCuts}x bad cuts`);
-  return parts.join(", ");
+function statsLine(score: ScoreResponse, categoryName: string): string {
+  const parts = [
+    `**${categoryName}**`,
+    `\`#${score.rank}\``,
+    `\`${score.ap.toFixed(2)} AP\``,
+    `\`${(score.accuracy * 100).toFixed(2)}%\``,
+  ];
+  if (score.streak115 > 0) {
+    parts.push(`\`${score.streak115}x 115\``);
+  }
+  if (score.misses === 0 && score.badCuts === 0) {
+    parts.push("**FC**");
+  } else {
+    const miss: string[] = [];
+    if (score.misses > 0) miss.push(`${score.misses}x misses`);
+    if (score.badCuts > 0) miss.push(`${score.badCuts}x bad cuts`);
+    parts.push(miss.join(", "));
+  }
+  return parts.join(" | ");
 }
 
-export type EmbedLinkTarget = "map" | "profile";
+export type EmbedThumbnail = "cover" | "avatar";
 
 export interface FeedEmbedOptions {
   score: ScoreResponse;
   color: number;
   title: string;
-  linkTarget: EmbedLinkTarget;
+  categoryName: string;
+  linkTarget: "map" | "profile";
+  thumbnail?: EmbedThumbnail;
   extraInfo?: string;
 }
 
 export function buildFeedEmbed(opts: FeedEmbedOptions): EmbedBuilder {
-  const { score, color, title, linkTarget, extraInfo } = opts;
+  const { score, color, title, categoryName, linkTarget, thumbnail, extraInfo } = opts;
 
   const url = linkTarget === "map" ? mapUrl(score) : profileUrl(score);
+  const thumb = (thumbnail ?? "cover") === "cover" ? score.coverUrl : score.avatarUrl;
 
   const lines = [
     songLine(score),
-    `\`#${score.rank}\` | ${fcLine(score)}`,
+    statsLine(score, categoryName),
     buildLinks(score),
   ];
   if (extraInfo) lines.splice(2, 0, extraInfo);
 
   return new EmbedBuilder()
     .setColor(color)
-    .setThumbnail(score.coverUrl)
+    .setThumbnail(thumb)
     .setAuthor({
       name: `${score.userName} ${countryFlag(score.country)}`,
       iconURL: score.avatarUrl,

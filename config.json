@@ -1,7 +1,10 @@
 {
   "clientId": "1482115372206395434",
   "guildId": "1481714922533683202",
-  "allowedChannels": ["1483599131909034146", "1482754208452055290"],
+  "allowedChannels": [
+    "1483599131909034146",
+    "1482754208452055290"
+  ],
   "api": {
     "baseUrl": "https://api.accsaberreloaded.com/v1",
     "cacheTtlMs": 3600000
@@ -29,10 +32,26 @@
       "enabled": true,
       "embedColor": "#ffd700",
       "thresholds": [
-        { "ap": 700, "enabled": true, "messageTemplate": "{playerName} just set their first 700+ AP score with {ap} AP ({accuracy}%) on {songName}!" },
-        { "ap": 800, "enabled": true, "messageTemplate": "{playerName} just set their first 800+ AP score with {ap} AP ({accuracy}%) on {songName}!" },
-        { "ap": 900, "enabled": true, "messageTemplate": "{playerName} just set their first 900+ AP score with {ap} AP ({accuracy}%) on {songName}!" },
-        { "ap": 1000, "enabled": true, "messageTemplate": "{playerName} just set their first 1000+ AP score with {ap} AP ({accuracy}%) on {songName}!" }
+        {
+          "ap": 700,
+          "enabled": true,
+          "messageTemplate": "{playerName} just set their first 700+ AP score with {ap} AP ({accuracy}%) on {songName}!"
+        },
+        {
+          "ap": 800,
+          "enabled": true,
+          "messageTemplate": "{playerName} just set their first 800+ AP score with {ap} AP ({accuracy}%) on {songName}!"
+        },
+        {
+          "ap": 900,
+          "enabled": true,
+          "messageTemplate": "{playerName} just set their first 900+ AP score with {ap} AP ({accuracy}%) on {songName}!"
+        },
+        {
+          "ap": 1000,
+          "enabled": true,
+          "messageTemplate": "{playerName} just set their first 1000+ AP score with {ap} AP ({accuracy}%) on {songName}!"
+        }
       ]
     },
     "allScoresAbove": {
@@ -55,23 +74,75 @@
     },
     "topRank": {
       "enabled": true,
-      "embedColor": "#3b82f6",
+      "categories": [
+        {
+          "categoryCode": "overall",
+          "embedColor": "#a855f7"
+        },
+        {
+          "categoryCode": "standard_acc",
+          "embedColor": "#3b82f6"
+        },
+        {
+          "categoryCode": "true_acc",
+          "embedColor": "#22c55e"
+        },
+        {
+          "categoryCode": "tech_acc",
+          "embedColor": "#ef4444"
+        }
+      ],
+      "detailThreshold": 10,
+      "detailMessageTemplate": "{playerName} is now #{categoryRank} in {categoryName}!",
       "thresholds": [
-        { "rank": 10, "enabled": true, "messageTemplate": "{playerName} entered the top 10 on {songName} with {ap} AP ({accuracy}%)!" },
-        { "rank": 25, "enabled": true, "messageTemplate": "{playerName} entered the top 25 on {songName} with {ap} AP ({accuracy}%)!" },
-        { "rank": 50, "enabled": true, "messageTemplate": "{playerName} entered the top 50 on {songName} with {ap} AP ({accuracy}%)!" },
-        { "rank": 100, "enabled": true, "messageTemplate": "{playerName} entered the top 100 on {songName} with {ap} AP ({accuracy}%)!" },
-        { "rank": 200, "enabled": true, "messageTemplate": "{playerName} entered the top 200 on {songName} with {ap} AP ({accuracy}%)!" },
-        { "rank": 300, "enabled": true, "messageTemplate": "{playerName} entered the top 300 on {songName} with {ap} AP ({accuracy}%)!" }
+        {
+          "rank": 10,
+          "enabled": true,
+          "messageTemplate": "{playerName} entered the top 10 in {categoryName}!"
+        },
+        {
+          "rank": 25,
+          "enabled": true,
+          "messageTemplate": "{playerName} entered the top 25 in {categoryName}!"
+        },
+        {
+          "rank": 50,
+          "enabled": true,
+          "messageTemplate": "{playerName} entered the top 50 in {categoryName}!"
+        },
+        {
+          "rank": 100,
+          "enabled": true,
+          "messageTemplate": "{playerName} entered the top 100 in {categoryName}!"
+        },
+        {
+          "rank": 200,
+          "enabled": true,
+          "messageTemplate": "{playerName} entered the top 200 in {categoryName}!"
+        },
+        {
+          "rank": 300,
+          "enabled": true,
+          "messageTemplate": "{playerName} entered the top 300 in {categoryName}!"
+        }
       ]
     },
     "streak": {
       "enabled": true,
       "embedColor": "#a855f7",
       "categoryThresholds": [
-        { "categoryCode": "tech_acc", "threshold": 9 },
-        { "categoryCode": "standard_acc", "threshold": 9 },
-        { "categoryCode": "true_acc", "threshold": 12 }
+        {
+          "categoryCode": "tech_acc",
+          "threshold": 9
+        },
+        {
+          "categoryCode": "standard_acc",
+          "threshold": 10
+        },
+        {
+          "categoryCode": "true_acc",
+          "threshold": 12
+        }
       ],
       "messageTemplate": "{playerName} hit a {streak115} note 115 streak on {songName} ({categoryName})!"
     }

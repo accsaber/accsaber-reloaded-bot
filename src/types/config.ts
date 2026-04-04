@@ -36,13 +36,19 @@ export interface TopRankThresholdConfig {
   rank: number;
   enabled: boolean;
   messageTemplate: string;
-  embedColor?: string;
+}
+
+export interface TopRankCategoryConfig {
+  categoryCode: string;
+  embedColor: string;
 }
 
 export interface TopRankConfig {
   enabled: boolean;
-  embedColor: string;
+  categories: TopRankCategoryConfig[];
   thresholds: TopRankThresholdConfig[];
+  detailThreshold: number;
+  detailMessageTemplate: string;
 }
 
 export interface StreakCategoryConfig {
