@@ -103,7 +103,7 @@ function trendStr(
   value: number | null | undefined,
   invert = false
 ): { text: string; color: string } {
-  if (value == null || value === 0) return { text: "", color: TEXT_TERTIARY };
+  if (value == null || Math.abs(value) < 0.005) return { text: "", color: TEXT_TERTIARY };
   const positive = invert ? value < 0 : value > 0;
   const arrow = positive ? "\u25B2" : "\u25BC";
   const abs = Math.abs(value);
@@ -215,7 +215,7 @@ export async function renderProfileCard(data: ProfileCardData): Promise<Buffer> 
     const lvW = ctx.measureText(lvText).width;
     ctx.fillStyle = TEXT_SECONDARY;
     ctx.font = `400 15px ${SANS}`;
-    ctx.fillText(` — ${data.level.title}`, nameX + lvW, lvY);
+    ctx.fillText(` - ${data.level.title}`, nameX + lvW, lvY);
 
     const barX = nameX;
     const barY = lvY + 24;
