@@ -138,37 +138,51 @@ export class ScoreFeed {
 
     if (enabledThresholds.length === 0) return null;
 
-    const page = await getUserScores(score.userId, {
-      categoryId: score.categoryId,
-      size: 2,
-      sort: "ap,desc",
-    });
-
-    if (page.content.length === 0) return null;
-
-    const topScore = page.content[0];
-    if (topScore.id !== score.id) return null;
-
-    const previousBestAp = page.content.length > 1 ? page.content[1].ap : 0;
-
-    const matchedThreshold = enabledThresholds.find(
-      (t) => previousBestAp < t.ap
-    );
-    if (!matchedThreshold) return null;
+    const [overallPage, categoryPage] = await Promise.all([
+      getUserScores(score.userId, { size: 2, sort: "ap,desc" }),
+      getUserScores(score.userId, { categoryId: score.categoryId, size: 2, sort: "ap,desc" }),
+    ]);
 
     const category = await resolveCategory(score.categoryId);
+
+    const overallTop = overallPage.content[0];
+    const prevOverallAp = overallPage.content.length > 1 ? overallPage.content[1].ap : 0;
+    const isNewOverallTop = overallTop?.id === score.id;
+    const overallMatched = isNewOverallTop
+      ? enabledThresholds.find((t) => prevOverallAp < t.ap)
+      : undefined;
+
+    if (overallMatched) {
+      const vars = {
+        ...commonVars(score, category.name),
+        threshold: overallMatched.ap,
+        firstEverLabel: "EVER",
+      };
+      return buildFeedEmbed({
+        score,
+        color: parseHexColor(overallMatched.embedColor ?? firstMilestone.embedColor),
+        title: renderTemplate(overallMatched.messageTemplate, vars),
+        categoryName: category.name,
+        linkTarget: "map",
+      });
+    }
+
+    const categoryTop = categoryPage.content[0];
+    if (!categoryTop || categoryTop.id !== score.id) return null;
+
+    const prevCatAp = categoryPage.content.length > 1 ? categoryPage.content[1].ap : 0;
+    const catMatched = enabledThresholds.find((t) => prevCatAp < t.ap);
+    if (!catMatched) return null;
+
     const vars = {
       ...commonVars(score, category.name),
-      threshold: matchedThreshold.ap,
+      threshold: catMatched.ap,
+      firstEverLabel: `in ${category.name}`,
     };
-    const color = parseHexColor(
-      matchedThreshold.embedColor ?? firstMilestone.embedColor
-    );
-
     return buildFeedEmbed({
       score,
-      color,
-      title: renderTemplate(matchedThreshold.messageTemplate, vars),
+      color: parseHexColor(catMatched.embedColor ?? firstMilestone.embedColor),
+      title: renderTemplate(catMatched.messageTemplate, vars),
       categoryName: category.name,
       linkTarget: "map",
     });

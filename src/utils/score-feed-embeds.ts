@@ -27,7 +27,7 @@ export function countryFlag(countryCode: string): string {
 }
 
 function mapUrl(score: ScoreResponse): string {
-  return `https://accsaberreloaded.com/maps/${score.mapId}`;
+  return `https://accsaberreloaded.com/maps/${score.mapId}?difficultyId=${score.mapDifficultyId}`;
 }
 
 function profileUrl(score: ScoreResponse): string {

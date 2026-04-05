@@ -35,22 +35,22 @@
         {
           "ap": 700,
           "enabled": true,
-          "messageTemplate": "{playerName} just set their first 700+ AP score!"
+          "messageTemplate": "{playerName} just set their first 700+ AP score {firstEverLabel}!"
         },
         {
           "ap": 800,
           "enabled": true,
-          "messageTemplate": "{playerName} just set their first 800+ AP score!"
+          "messageTemplate": "{playerName} just set their first 800+ AP score {firstEverLabel}!"
         },
         {
           "ap": 900,
           "enabled": true,
-          "messageTemplate": "{playerName} just set their first 900+ AP score!"
+          "messageTemplate": "{playerName} just set their first 900+ AP score {firstEverLabel}!"
         },
         {
           "ap": 1000,
           "enabled": true,
-          "messageTemplate": "{playerName} just set their first 1000+ AP score!"
+          "messageTemplate": "{playerName} just set their first 1000+ AP score {firstEverLabel}!"
         }
       ]
     },
