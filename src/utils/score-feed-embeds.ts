@@ -51,12 +51,17 @@ function comboLine(score: ScoreResponse): string {
   return parts.join(" · ");
 }
 
+function songLine(score: ScoreResponse): string {
+  return `${score.songAuthor} - **${score.songName}** [${formatDifficulty(score.difficulty)}] (${score.mapAuthor})`;
+}
+
 export interface FeedEmbedOptions {
   score: ScoreResponse;
   color: number;
   title: string;
   categoryName: string;
   linkTarget: "map" | "profile";
+  preamble?: string;
   extraInfo?: string;
 }
 
@@ -66,10 +71,14 @@ export interface FeedEmbedResult {
 }
 
 export function buildFeedEmbed(opts: FeedEmbedOptions): FeedEmbedResult {
-  const { score, color, title, categoryName, linkTarget, extraInfo } = opts;
+  const { score, color, title, categoryName, linkTarget, preamble, extraInfo } = opts;
 
   const url = linkTarget === "map" ? mapUrl(score) : profileUrl(score);
-  const description = `${score.songAuthor} – **${score.songName}** [${formatDifficulty(score.difficulty)}]`;
+
+  const descLines: string[] = [];
+  if (preamble) descLines.push(preamble);
+  descLines.push(songLine(score));
+  if (extraInfo) descLines.push(extraInfo);
 
   const embed = new EmbedBuilder()
     .setColor(color)
@@ -81,23 +90,24 @@ export function buildFeedEmbed(opts: FeedEmbedOptions): FeedEmbedResult {
     })
     .setTitle(title)
     .setURL(url)
-    .setDescription(extraInfo ? `${description}\n${extraInfo}` : description)
+    .setDescription(descLines.join("\n"))
     .addFields(
       { name: "AP", value: `\`${score.ap.toFixed(2)}\``, inline: true },
       { name: "Accuracy", value: `\`${(score.accuracy * 100).toFixed(2)}%\``, inline: true },
       { name: "Rank", value: `\`#${score.rank}\``, inline: true },
       { name: "Category", value: categoryName, inline: true },
-      { name: "Combo", value: comboLine(score) || "–", inline: true },
-      { name: "Mapper", value: score.mapAuthor, inline: true },
+      { name: "Combo", value: comboLine(score) || "-", inline: true },
     )
     .setTimestamp(new Date(score.timeSet));
 
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
+      .setEmoji("👤")
       .setLabel("Profile")
       .setStyle(ButtonStyle.Link)
       .setURL(profileUrl(score)),
     new ButtonBuilder()
+      .setEmoji("🗺️")
       .setLabel("Map")
       .setStyle(ButtonStyle.Link)
       .setURL(mapUrl(score)),
@@ -106,6 +116,7 @@ export function buildFeedEmbed(opts: FeedEmbedOptions): FeedEmbedResult {
   if (score.blScoreId) {
     row.addComponents(
       new ButtonBuilder()
+        .setEmoji("▶️")
         .setLabel("Replay")
         .setStyle(ButtonStyle.Link)
         .setURL(`https://replay.beatleader.com/?scoreId=${score.blScoreId}`)

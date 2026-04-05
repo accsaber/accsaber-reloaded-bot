@@ -70,7 +70,7 @@
     "rankOne": {
       "enabled": true,
       "embedColor": "#ffd700",
-      "messageTemplate": "{playerName} just got #1!"
+      "messageTemplate": "{playerName} just got a #1!"
     },
     "topRank": {
       "enabled": true,

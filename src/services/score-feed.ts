@@ -162,6 +162,8 @@ export class ScoreFeed {
       ? enabledThresholds.find((t) => prevOverallAp < t.ap)
       : undefined;
 
+    const preamble = "They earned it with a score on:";
+
     if (overallMatched) {
       const vars = {
         ...commonVars(score, category.name),
@@ -174,6 +176,7 @@ export class ScoreFeed {
         title: renderTemplate(overallMatched.messageTemplate, vars),
         categoryName: category.name,
         linkTarget: "map",
+        preamble,
       });
     }
 
@@ -195,6 +198,7 @@ export class ScoreFeed {
       title: renderTemplate(catMatched.messageTemplate, vars),
       categoryName: category.name,
       linkTarget: "map",
+      preamble,
     });
   }
 
@@ -310,6 +314,7 @@ export class ScoreFeed {
       ? "Overall"
       : (await getCategoryNameById(stats.categoryId)) ?? catConfig.categoryCode;
     const color = parseHexColor(catConfig.embedColor);
+    const preamble = "They earned it with a score on:";
 
     if (currentRank <= topRank.detailThreshold) {
       const key = `${score.userId}:${catConfig.categoryCode}:detail:${currentRank}`;
@@ -329,6 +334,7 @@ export class ScoreFeed {
         title: renderTemplate(topRank.detailMessageTemplate, vars),
         categoryName: catName,
         linkTarget: "profile",
+        preamble,
         extraInfo: `Moved from \`#${previousRank}\` to \`#${currentRank}\` in **${catName}**`,
       });
     }
@@ -357,6 +363,7 @@ export class ScoreFeed {
       title: renderTemplate(best.messageTemplate, vars),
       categoryName: catName,
       linkTarget: "profile",
+      preamble,
     });
   }
 
