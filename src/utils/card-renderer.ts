@@ -210,7 +210,8 @@ export async function renderProfileCard(data: ProfileCardData): Promise<Buffer> 
   }
 
   if (data.level) {
-    const lvY = nameY + 36;
+    const lvY = nameY + 44;
+    ctx.textBaseline = "middle";
     ctx.font = `500 15px ${MONO}`;
     ctx.fillStyle = tierHex;
     const lvText = `Lv.${data.level.level}`;
@@ -220,6 +221,7 @@ export async function renderProfileCard(data: ProfileCardData): Promise<Buffer> 
     ctx.fillStyle = TEXT_SECONDARY;
     ctx.font = `400 15px ${SANS}`;
     ctx.fillText(` - ${data.level.title}`, nameX + lvW, lvY);
+    ctx.textBaseline = "top";
 
     const barX = nameX;
     const barY = lvY + 24;
