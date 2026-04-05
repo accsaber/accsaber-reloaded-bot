@@ -252,7 +252,7 @@ export async function renderProfileCard(data: ProfileCardData): Promise<Buffer> 
     const rowY = scoreStartY + i * scoreLineH;
     const coverX = statsStartX + 28;
     const coverY = rowY + Math.floor((scoreLineH - coverSize) / 2) - 2;
-    drawScoreRow(ctx, score, i, coverX, coverY, txStart, scoreMaxW, coverSize, glowPad, data, accent, cardX, cardW, statsStartX);
+    await drawScoreRow(ctx, score, i, coverX, coverY, txStart, scoreMaxW, coverSize, glowPad, data, accent, cardX, cardW, statsStartX);
   }
 
   if (data.topScores.length === 0 && data.stats) {
@@ -286,12 +286,12 @@ export async function renderProfileCard(data: ProfileCardData): Promise<Buffer> 
   return canvas.toBuffer("image/png");
 }
 
-function drawScoreRow(
+async function drawScoreRow(
   ctx: Ctx, score: ScoreResponse, i: number,
   coverX: number, coverY: number, txStart: number, scoreMaxW: number,
   coverSize: number, glowPad: number,
   data: ProfileCardData, accent: string, cardX: number, cardW: number, statsStartX: number
-): void {
+): Promise<void> {
   const diff = formatDifficulty(score.difficulty);
   const acc = (score.accuracy * 100).toFixed(2);
   const ap = score.ap.toFixed(2);
@@ -304,7 +304,7 @@ function drawScoreRow(
   ctx.fillText(`${i + 1}.`, statsStartX, coverY + coverSize / 2);
   ctx.textBaseline = "top";
 
-  drawCoverArt(ctx, score.coverUrl, coverX, coverY, coverSize, glowPad);
+  await drawCoverArt(ctx, score.coverUrl, coverX, coverY, coverSize, glowPad);
 
   const topLineY = coverY + 2;
   const botLineY = coverY + 19;
