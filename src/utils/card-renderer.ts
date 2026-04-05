@@ -94,22 +94,49 @@ function drawRoundedRect(
   }
 }
 
+function ageInDays(dateStr: string): number {
+  return (Date.now() - new Date(dateStr).getTime()) / 86_400_000;
+}
+
 function relativeTime(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const secs = Math.floor(diff / 1000);
-  if (secs < 60) return "just now";
-  const mins = Math.floor(secs / 60);
+  const days = ageInDays(dateStr);
+  if (days < 0.0007) return "just now";
+  const mins = Math.floor(days * 1440);
   if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
+  const hrs = Math.floor(days * 24);
   if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}d ago`;
-  const weeks = Math.floor(days / 7);
-  if (days < 30) return `${weeks}w ago`;
-  const months = Math.floor(days / 30);
+  const d = Math.floor(days);
+  if (d < 7) return `${d}d ago`;
+  const weeks = Math.floor(d / 7);
+  if (d < 30) return `${weeks}w ago`;
+  const months = Math.floor(d / 30);
   if (months < 12) return `${months}mo ago`;
-  const years = Math.floor(days / 365);
-  return `${years}y ago`;
+  return `${Math.floor(d / 365)}y ago`;
+}
+
+function ageColor(dateStr: string): string {
+  const days = ageInDays(dateStr);
+  if (days < 7) return TEXT_PRIMARY;
+  if (days >= 365) return TEXT_TERTIARY;
+  const pr = [0xe8, 0xe8, 0xf0];
+  const sc = [0x88, 0x88, 0xa0];
+  const tr = [0x5a, 0x5a, 0x72];
+  let t: number;
+  let from: number[];
+  let to: number[];
+  if (days < 30) {
+    t = (days - 7) / 23;
+    from = pr;
+    to = sc;
+  } else {
+    t = Math.min((days - 30) / 335, 1);
+    from = sc;
+    to = tr;
+  }
+  const r = Math.round(from[0] + (to[0] - from[0]) * t);
+  const g = Math.round(from[1] + (to[1] - from[1]) * t);
+  const b = Math.round(from[2] + (to[2] - from[2]) * t);
+  return `rgb(${r}, ${g}, ${b})`;
 }
 
 function numberFmt(n: number, decimals: number): string {
@@ -384,8 +411,9 @@ export async function renderProfileCard(data: ProfileCardData): Promise<Buffer> 
     const topLineY = coverY + 2;
     const botLineY = coverY + 19;
 
+    const scoreAge = ageColor(score.timeSet);
     ctx.font = `500 14px ${SANS}`;
-    ctx.fillStyle = TEXT_PRIMARY;
+    ctx.fillStyle = scoreAge;
     const maxSongW = scoreMaxW - (txStart - statsStartX) - 300;
     let songText = `${score.songName} `;
     while (ctx.measureText(songText).width > maxSongW && songText.length > 10) {
