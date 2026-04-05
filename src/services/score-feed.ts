@@ -111,9 +111,6 @@ export class ScoreFeed {
     if (this.cfg.underdog.enabled) {
       single.push(this.checkUnderdog(score));
     }
-    if (!milestoneFired && !allScoresFired && !rankOneFired && this.cfg.streak.enabled) {
-      single.push(this.checkStreak(score));
-    }
     if (this.cfg.topRank.enabled) {
       multi.push(this.checkTopRank(score));
     }
@@ -130,11 +127,22 @@ export class ScoreFeed {
         console.error("[ScoreFeed] Trigger check failed:", result.reason);
       }
     }
+    let topRankFired = false;
     for (const result of multiResults) {
-      if (result.status === "fulfilled") {
+      if (result.status === "fulfilled" && result.value.length > 0) {
         cards.push(...result.value);
-      } else {
+        topRankFired = true;
+      } else if (result.status === "rejected") {
         console.error("[ScoreFeed] Trigger check failed:", result.reason);
+      }
+    }
+
+    if (!milestoneFired && !allScoresFired && !rankOneFired && !topRankFired && this.cfg.streak.enabled) {
+      try {
+        const streakResult = await this.checkStreak(score);
+        if (streakResult) cards.push(streakResult);
+      } catch (err) {
+        console.error("[ScoreFeed] Trigger check failed:", err);
       }
     }
 

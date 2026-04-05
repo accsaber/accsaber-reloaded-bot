@@ -258,6 +258,11 @@ export async function renderFeedCard(data: FeedCardData): Promise<FeedCardResult
   ctx.fillStyle = TEXT_SECONDARY;
   ctx.fillText(accStr, leftX, curY + 32);
 
+  const accW = ctx.measureText(accStr).width;
+  ctx.font = `400 11px ${MONO}`;
+  ctx.fillStyle = TEXT_TERTIARY;
+  ctx.fillText(`  (${numberFmt(score.weightedAp, 2)} weighted)`, leftX + accW, curY + 36);
+
   ctx.font = `700 18px ${MONO}`;
   ctx.fillStyle = RANK_COLORS[score.rank] ?? TEXT_PRIMARY;
   const rankW = ctx.measureText(rankStr).width;
