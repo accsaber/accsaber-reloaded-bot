@@ -279,7 +279,7 @@ export async function renderProfileCard(data: ProfileCardData): Promise<Buffer> 
     ctx.restore();
 
     ctx.font = `500 11px ${SANS}`;
-    ctx.fillStyle = TEXT_TERTIARY;
+    ctx.fillStyle = TEXT_SECONDARY;
     ctx.textBaseline = "top";
     ctx.letterSpacing = "0.5px";
     ctx.fillText(box.label, bx + 16, statsY + 14);
