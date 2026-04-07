@@ -10,18 +10,19 @@ function deriveWsUrl(): string {
 }
 
 export class ScoreWebSocket {
+  private static readonly FAST_RETRY_LIMIT = 3;
+  private static readonly FAST_RETRY_INTERVAL = 5_000;
+  private static readonly SLOW_RETRY_INTERVAL = 60_000;
+
   private ws: WebSocket | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private handlers: ((score: ScoreResponse) => void)[] = [];
-  private attempt = 0;
   private destroyed = false;
+  private failedAttempts = 0;
   private readonly url: string;
-  private readonly baseInterval: number;
-  private static readonly MAX_INTERVAL = 30_000;
 
   constructor() {
     this.url = deriveWsUrl();
-    this.baseInterval = config.scoreFeed?.reconnectIntervalMs ?? 5000;
   }
 
   onScore(handler: (score: ScoreResponse) => void): void {
@@ -32,10 +33,17 @@ export class ScoreWebSocket {
     if (this.destroyed) return;
 
     console.log(`[ScoreFeed] Connecting to ${this.url}`);
-    this.ws = new WebSocket(this.url);
+
+    try {
+      this.ws = new WebSocket(this.url);
+    } catch (err) {
+      console.error("[ScoreFeed] Failed to construct WebSocket:", err);
+      this.scheduleReconnect();
+      return;
+    }
 
     this.ws.onopen = () => {
-      this.attempt = 0;
+      this.failedAttempts = 0;
       console.log("[ScoreFeed] WebSocket connected");
     };
 
@@ -47,19 +55,25 @@ export class ScoreWebSocket {
       console.log(
         `[ScoreFeed] WebSocket closed (code=${event.code}, reason=${event.reason})`
       );
+      this.ws = null;
       this.scheduleReconnect();
     };
 
     this.ws.onerror = (event) => {
       console.error("[ScoreFeed] WebSocket error:", event);
+      this.scheduleReconnect();
     };
   }
 
   destroy(): void {
     this.destroyed = true;
-    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
     if (this.ws) {
       this.ws.onclose = null;
+      this.ws.onerror = null;
       this.ws.close();
     }
     this.ws = null;
@@ -67,14 +81,21 @@ export class ScoreWebSocket {
 
   private scheduleReconnect(): void {
     if (this.destroyed) return;
+    if (this.reconnectTimer) return;
 
-    const delay = Math.min(
-      this.baseInterval * 2 ** this.attempt,
-      ScoreWebSocket.MAX_INTERVAL
+    this.failedAttempts++;
+    const isFastRetry = this.failedAttempts <= ScoreWebSocket.FAST_RETRY_LIMIT;
+    const delay = isFastRetry
+      ? ScoreWebSocket.FAST_RETRY_INTERVAL
+      : ScoreWebSocket.SLOW_RETRY_INTERVAL;
+
+    console.log(
+      `[ScoreFeed] Reconnecting in ${delay}ms (attempt ${this.failedAttempts}, ${isFastRetry ? "fast" : "slow"})`
     );
-    this.attempt++;
-    console.log(`[ScoreFeed] Reconnecting in ${delay}ms (attempt ${this.attempt})`);
-    this.reconnectTimer = setTimeout(() => this.connect(), delay);
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.connect();
+    }, delay);
   }
 
   private handleMessage(data: string): void {
