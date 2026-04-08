@@ -1,3 +1,4 @@
+import WebSocket from "ws";
 import { config } from "../config.js";
 import type { ScoreResponse } from "../types/api.js";
 
@@ -13,9 +14,13 @@ export class ScoreWebSocket {
   private static readonly FAST_RETRY_LIMIT = 3;
   private static readonly FAST_RETRY_INTERVAL = 5_000;
   private static readonly SLOW_RETRY_INTERVAL = 60_000;
+  private static readonly PING_INTERVAL = 30_000;
+  private static readonly PONG_TIMEOUT = 10_000;
 
   private ws: WebSocket | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private pingTimer: ReturnType<typeof setInterval> | null = null;
+  private pongTimer: ReturnType<typeof setTimeout> | null = null;
   private handlers: ((score: ScoreResponse) => void)[] = [];
   private destroyed = false;
   private failedAttempts = 0;
@@ -42,27 +47,32 @@ export class ScoreWebSocket {
       return;
     }
 
-    this.ws.onopen = () => {
+    this.ws.on("open", () => {
       this.failedAttempts = 0;
       console.log("[ScoreFeed] WebSocket connected");
-    };
+      this.startHeartbeat();
+    });
 
-    this.ws.onmessage = (event) => {
-      this.handleMessage(String(event.data));
-    };
+    this.ws.on("message", (data) => {
+      this.handleMessage(data.toString());
+    });
 
-    this.ws.onclose = (event) => {
+    this.ws.on("pong", () => {
+      this.clearPongTimer();
+    });
+
+    this.ws.on("close", (code, reason) => {
       console.log(
-        `[ScoreFeed] WebSocket closed (code=${event.code}, reason=${event.reason})`
+        `[ScoreFeed] WebSocket closed (code=${code}, reason=${reason.toString()})`
       );
+      this.stopHeartbeat();
       this.ws = null;
       this.scheduleReconnect();
-    };
+    });
 
-    this.ws.onerror = (event) => {
-      console.error("[ScoreFeed] WebSocket error:", event);
-      this.scheduleReconnect();
-    };
+    this.ws.on("error", (err) => {
+      console.error("[ScoreFeed] WebSocket error:", err);
+    });
   }
 
   destroy(): void {
@@ -71,12 +81,44 @@ export class ScoreWebSocket {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
+    this.stopHeartbeat();
     if (this.ws) {
-      this.ws.onclose = null;
-      this.ws.onerror = null;
+      this.ws.removeAllListeners();
       this.ws.close();
     }
     this.ws = null;
+  }
+
+  private startHeartbeat(): void {
+    this.stopHeartbeat();
+    this.pingTimer = setInterval(() => {
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+      try {
+        this.ws.ping();
+      } catch (err) {
+        console.error("[ScoreFeed] Failed to send ping:", err);
+        return;
+      }
+      this.pongTimer = setTimeout(() => {
+        console.warn("[ScoreFeed] Pong timeout, terminating connection");
+        this.ws?.terminate();
+      }, ScoreWebSocket.PONG_TIMEOUT);
+    }, ScoreWebSocket.PING_INTERVAL);
+  }
+
+  private stopHeartbeat(): void {
+    if (this.pingTimer) {
+      clearInterval(this.pingTimer);
+      this.pingTimer = null;
+    }
+    this.clearPongTimer();
+  }
+
+  private clearPongTimer(): void {
+    if (this.pongTimer) {
+      clearTimeout(this.pongTimer);
+      this.pongTimer = null;
+    }
   }
 
   private scheduleReconnect(): void {
