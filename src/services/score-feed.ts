@@ -11,7 +11,7 @@ import { getMapDifficultyComplexity, getMapLeaderboard, getUserScores } from "..
 import { getCategoryLeaderboardAt, getUserCategoryStatistics, getUserStatsDiff } from "../api/statistics.js";
 import { getUserLevel } from "../api/users.js";
 import { config } from "../config.js";
-import type { ScoreResponse } from "../types/api.js";
+import type { ScoreResponse, UserCategoryStatisticsResponse } from "../types/api.js";
 import type { ScoreFeedConfig, TopRankCategoryConfig } from "../types/config.js";
 import { CATEGORY_HEX } from "../utils/canvas-utils.js";
 import { renderFeedCard, type FeedCardData } from "../utils/feed-card-renderer.js";
@@ -40,6 +40,25 @@ async function resolveCategory(categoryId: string) {
   const code = (await getCategoryCodeById(categoryId)) ?? "overall";
   const name = (await getCategoryNameById(categoryId)) ?? "Overall";
   return { code, name };
+}
+
+const STATS_POLL_INTERVAL = 3_000;
+const STATS_POLL_MAX_ATTEMPTS = 15;
+
+async function waitForFreshStats(
+  userId: string,
+  categoryCode: string,
+  scoreCreatedAt: string
+): Promise<UserCategoryStatisticsResponse> {
+  const scoreTime = new Date(scoreCreatedAt).getTime();
+
+  for (let i = 0; i < STATS_POLL_MAX_ATTEMPTS; i++) {
+    const stats = await getUserCategoryStatistics(userId, categoryCode);
+    if (new Date(stats.createdAt).getTime() >= scoreTime) return stats;
+    await new Promise((r) => setTimeout(r, STATS_POLL_INTERVAL));
+  }
+
+  return getUserCategoryStatistics(userId, categoryCode);
 }
 
 export class ScoreFeed {
@@ -357,10 +376,8 @@ export class ScoreFeed {
   ): Promise<FeedCardData | null> {
     const { topRank } = this.cfg;
 
-    const [stats, diff] = await Promise.all([
-      getUserCategoryStatistics(score.userId, catConfig.categoryCode),
-      getUserStatsDiff(score.userId, catConfig.categoryCode),
-    ]);
+    const stats = await waitForFreshStats(score.userId, catConfig.categoryCode, score.createdAt);
+    const diff = await getUserStatsDiff(score.userId, catConfig.categoryCode);
 
     const currentRank = stats.ranking;
     const previousRank = diff ? currentRank - diff.rankingDiff : currentRank;
