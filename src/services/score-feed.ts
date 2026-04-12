@@ -7,7 +7,7 @@ import {
   type TextChannel,
 } from "discord.js";
 import { getCategoryCodeById, getCategoryNameById } from "../api/categories.js";
-import { getMapDifficultyComplexity, getMapLeaderboard, getUserScores } from "../api/scores.js";
+import { getMapDifficultyComplexity, getMapLeaderboard, getUserHistoricScores, getUserScores } from "../api/scores.js";
 import { getCategoryLeaderboardAt, getUserCategoryStatistics, getUserStatsDiff } from "../api/statistics.js";
 import { getUserLevel } from "../api/users.js";
 import { config } from "../config.js";
@@ -243,6 +243,9 @@ export class ScoreFeed {
       : undefined;
 
     if (overallMatched) {
+      const prevOnMap = await this.getPreviousApOnMap(score);
+      if (prevOnMap >= overallMatched.ap) return null;
+
       const vars = {
         ...commonVars(score, category.name),
         threshold: overallMatched.ap,
@@ -265,6 +268,9 @@ export class ScoreFeed {
     const catMatched = enabledThresholds.find((t) => prevCatAp < t.ap);
     if (!catMatched) return null;
 
+    const prevOnMap = await this.getPreviousApOnMap(score);
+    if (prevOnMap >= catMatched.ap) return null;
+
     const vars = {
       ...commonVars(score, category.name),
       threshold: catMatched.ap,
@@ -278,6 +284,21 @@ export class ScoreFeed {
       categoryName: category.name,
       preamble: "They earned it with a score on:",
     };
+  }
+
+  private async getPreviousApOnMap(score: ScoreResponse): Promise<number> {
+    try {
+      const history = await getUserHistoricScores(
+        score.userId,
+        score.mapDifficultyId,
+        { amount: 30, unit: "d" }
+      );
+      const previous = history.filter((s) => s.id !== score.id);
+      if (previous.length === 0) return 0;
+      return Math.max(...previous.map((s) => s.ap));
+    } catch {
+      return 0;
+    }
   }
 
   private async checkAllScoresAbove(

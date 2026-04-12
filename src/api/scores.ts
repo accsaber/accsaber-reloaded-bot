@@ -23,6 +23,20 @@ export async function getMapDifficultyComplexity(
   return diffs.find((d) => d.id === difficultyId)?.complexity;
 }
 
+export function getUserHistoricScores(
+  userId: string,
+  mapDifficultyId: string,
+  params: { amount?: number; unit?: string } = {}
+): Promise<ScoreResponse[]> {
+  const query = new URLSearchParams();
+  query.set("mapDifficultyId", mapDifficultyId);
+  if (params.amount) query.set("amount", String(params.amount));
+  if (params.unit) query.set("unit", params.unit);
+  return apiGet<ScoreResponse[]>(
+    `/users/${userId}/scores/historic?${query.toString()}`
+  );
+}
+
 export function getMapLeaderboard(
   difficultyId: string,
   params: { page?: number; size?: number; sort?: string } = {}
