@@ -201,6 +201,11 @@
         "emoji": "🗺️",
         "roleId": "1485089681312976996",
         "label": "Ranking Updates"
+      },
+      "pluginUpdates": {
+        "emoji": "🐛",
+        "roleId": "1508429624760074341",
+        "label": "Plugin Updates"
       }
     }
   }
