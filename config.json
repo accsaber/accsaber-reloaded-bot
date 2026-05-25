@@ -206,6 +206,11 @@
         "emoji": "🐛",
         "roleId": "1508429624760074341",
         "label": "Plugin Updates"
+      },
+      "campaignUpdates": {
+        "emoji": "⛺",
+        "roleId": "1508576455309660251",
+        "label": "Campaign Updates"
       }
     }
   }
