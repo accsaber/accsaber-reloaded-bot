@@ -17,6 +17,7 @@ import {
   drawRoundedRect,
   drawTrophyIcon,
   fetchImage,
+  hexWithAlpha,
   numberFmt,
   registerFonts,
   roundRect,
@@ -84,13 +85,16 @@ export async function renderMilestoneCard(
   const tierHex = TIER_HEX[milestone.tier];
   const tierLabel = TIER_LABEL[milestone.tier];
   const strongGlow = STRONG_GLOW_TIERS.has(milestone.tier);
+  const washColor = data.category
+    ? CATEGORY_HEX[data.category.code] ?? CATEGORY_HEX.overall
+    : tierHex;
 
   const tierInfo = data.level ? getTierForLevel(data.level) : undefined;
   const levelTierHex = tierInfo
     ? `#${tierInfo.color.toString(16).padStart(6, "0")}`
     : TEXT_SECONDARY;
 
-  const contentH = 228;
+  const contentH = 210;
   const H = CARD_Y * 2 + contentH;
   const CARD_H = contentH;
 
@@ -107,36 +111,23 @@ export async function renderMilestoneCard(
     /* skip */
   }
 
-  if (avatarImg) {
-    ctx.save();
-    ctx.globalAlpha = 0.15;
-    ctx.filter = "blur(40px)";
-    ctx.drawImage(avatarImg, -80, -80, W + 160, H + 160);
-    ctx.restore();
-  }
-
-  const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, "rgba(10, 10, 15, 0.5)");
-  grad.addColorStop(1, "rgba(10, 10, 15, 0.95)");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
-
-  drawRoundedRect(
-    ctx,
-    CARD_X,
-    CARD_Y,
-    CARD_W,
-    CARD_H,
-    12,
-    "rgba(20, 20, 31, 0.85)",
-    BG_OVERLAY
-  );
+  drawRoundedRect(ctx, CARD_X, CARD_Y, CARD_W, CARD_H, 12, "#13131c", BG_OVERLAY);
 
   ctx.save();
   roundRect(ctx, CARD_X, CARD_Y, CARD_W, CARD_H, 12);
   ctx.clip();
-  ctx.fillStyle = accentColor;
-  ctx.fillRect(CARD_X, CARD_Y, 3, CARD_H);
+  const wash = ctx.createRadialGradient(
+    CARD_X + CARD_W - 60,
+    CARD_Y + 20,
+    0,
+    CARD_X + CARD_W - 60,
+    CARD_Y + 20,
+    420
+  );
+  wash.addColorStop(0, hexWithAlpha(washColor, 0.16));
+  wash.addColorStop(1, hexWithAlpha(washColor, 0));
+  ctx.fillStyle = wash;
+  ctx.fillRect(CARD_X, CARD_Y, CARD_W, CARD_H);
   ctx.restore();
 
   const leftX = CARD_X + PAD + 4;
@@ -147,15 +138,15 @@ export async function renderMilestoneCard(
 
   let topRightX = rightEdge;
   if (data.category) {
-    const catLabel = data.category.name;
+    const catLabel = data.category.name.toUpperCase();
     const catColor = CATEGORY_HEX[data.category.code] ?? CATEGORY_HEX.overall;
-    ctx.font = `700 11px ${MONO}`;
-    const catW = ctx.measureText(catLabel).width + 20;
+    ctx.font = `700 10px ${MONO}`;
+    const catW = ctx.measureText(catLabel).width + 16;
     const catBadgeX = rightEdge - catW;
-    drawRoundedRect(ctx, catBadgeX, curY, catW, 22, 11, "rgba(0,0,0,0.3)", catColor);
+    drawRoundedRect(ctx, catBadgeX, curY + 4, catW, 18, 4, hexWithAlpha(catColor, 0.14));
     ctx.fillStyle = catColor;
     ctx.textBaseline = "middle";
-    ctx.fillText(catLabel, catBadgeX + 10, curY + 11);
+    ctx.fillText(catLabel, catBadgeX + 8, curY + 13);
     ctx.textBaseline = "top";
     topRightX = catBadgeX;
   }
@@ -164,9 +155,6 @@ export async function renderMilestoneCard(
   const avPad = 2;
   const borderSize = avSize + avPad * 2;
 
-  ctx.save();
-  ctx.shadowColor = levelTierHex;
-  ctx.shadowBlur = 12;
   drawRoundedRect(
     ctx,
     leftX - avPad,
@@ -176,7 +164,6 @@ export async function renderMilestoneCard(
     10,
     BG_ELEVATED
   );
-  ctx.restore();
 
   if (avatarImg) {
     ctx.save();
@@ -266,36 +253,36 @@ export async function renderMilestoneCard(
   curY += flagSize + 14;
 
   const xpStr = numberFmt(milestone.xp, 0);
-  ctx.font = `700 26px ${MONO}`;
+  ctx.font = `700 28px ${MONO}`;
   const xpW = ctx.measureText(xpStr).width;
   ctx.fillStyle = TEXT_PRIMARY;
   ctx.fillText(xpStr, leftX, curY);
 
-  ctx.font = `700 12px ${MONO}`;
-  ctx.fillStyle = accentColor;
-  ctx.fillText(" XP", leftX + xpW + 2, curY + 12);
+  ctx.font = `700 11px ${MONO}`;
+  ctx.fillStyle = washColor;
+  ctx.fillText("XP", leftX + xpW + 6, curY + 14);
 
-  const footDivY = CARD_Y + CARD_H - 34;
-  const footContentY = footDivY + 6;
+  if (data.trigger === "first") {
+    const chipLabel = "FIRST EVER";
+    ctx.font = `700 10px ${MONO}`;
+    const labelW = ctx.measureText(chipLabel).width + 16;
+    const chipX = rightEdge - labelW;
+    drawRoundedRect(ctx, chipX, curY + 6, labelW, 18, 4, hexWithAlpha(accentColor, 0.16));
+    ctx.fillStyle = accentColor;
+    ctx.textBaseline = "middle";
+    ctx.fillText(chipLabel, chipX + 8, curY + 15);
+    ctx.textBaseline = "top";
+  }
 
-  ctx.strokeStyle = BG_OVERLAY;
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(leftX, footDivY);
-  ctx.lineTo(rightEdge, footDivY);
-  ctx.stroke();
-
-  ctx.font = `400 12px ${SANS}`;
-  ctx.fillStyle = TEXT_TERTIARY;
-  ctx.textBaseline = "middle";
-  ctx.fillText("accsaberreloaded.com", leftX, footContentY + 12);
-  ctx.textBaseline = "top";
-
+  const footY = CARD_Y + CARD_H - 22;
   try {
     const logoBuf = await readFile(join(ASSETS_DIR, "logo.png"));
     const logoImg = await loadImage(logoBuf);
-    const logoSize = 24;
-    ctx.drawImage(logoImg, rightEdge - logoSize, footContentY + 1, logoSize, logoSize);
+    const logoSize = 14;
+    ctx.save();
+    ctx.globalAlpha = 0.45;
+    ctx.drawImage(logoImg, rightEdge - logoSize, footY, logoSize, logoSize);
+    ctx.restore();
   } catch {
     /* logo not available */
   }
