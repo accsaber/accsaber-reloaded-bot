@@ -48,15 +48,20 @@ export async function publishRoleMessage(client: ArBot): Promise<void> {
   const messages = await channel.messages.fetch({ limit: 1 });
   const existing = messages.first();
 
-  if (existing) {
-    await existing.edit({ embeds: [embed] });
-    return;
-  }
-
-  const sent = await channel.send({ embeds: [embed] });
+  const target = existing
+    ? await existing.edit({ embeds: [embed] })
+    : await channel.send({ embeds: [embed] });
 
   for (const entry of Object.values(rc.roles)) {
-    await sent.react(entry.emoji);
+    const already = target.reactions.cache.some(
+      (r) => r.emoji.name === entry.emoji && r.me
+    );
+    if (already) continue;
+    try {
+      await target.react(entry.emoji);
+    } catch (err) {
+      console.error(`[ReactionRoles] Failed to react with ${entry.emoji}:`, err);
+    }
   }
 }
 
