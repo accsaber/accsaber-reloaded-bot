@@ -6,12 +6,16 @@ import {
   type ChatInputCommandInteraction,
   type SlashCommandBuilder,
   type SlashCommandOptionsOnlyBuilder,
+  type SlashCommandSubcommandsOnlyBuilder,
 } from "discord.js";
 import type { MilestoneWebSocket } from "./services/milestone-ws.js";
 import type { ScoreWebSocket } from "./services/score-ws.js";
 
 export interface Command {
-  data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
+  data:
+    | SlashCommandBuilder
+    | SlashCommandOptionsOnlyBuilder
+    | SlashCommandSubcommandsOnlyBuilder;
   execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
 }
 
@@ -24,9 +28,15 @@ export class ArBot extends Client {
     super({
       intents: [
         GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildMessageReactions,
       ],
-      partials: [Partials.Message, Partials.Reaction, Partials.User],
+      partials: [
+        Partials.GuildMember,
+        Partials.Message,
+        Partials.Reaction,
+        Partials.User,
+      ],
     });
   }
 }

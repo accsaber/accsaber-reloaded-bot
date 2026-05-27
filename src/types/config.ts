@@ -141,6 +141,14 @@ export interface ReactionRolesConfig {
   roles: Record<string, ReactionRoleEntry>;
 }
 
+export interface SupportersConfig {
+  enabled: boolean;
+  roles: Record<string, string>;
+  adminRoleIds?: string[];
+  notifyDmOnClaim?: boolean;
+  notifyDmOnUnlinked?: boolean;
+}
+
 export interface Config {
   clientId: string;
   guildId: string;
@@ -156,4 +164,5 @@ export interface Config {
   reactionRoles?: ReactionRolesConfig;
   scoreFeed?: ScoreFeedConfig;
   milestoneFeed?: MilestoneFeedConfig;
+  supporters?: SupportersConfig;
 }

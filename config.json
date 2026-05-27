@@ -213,5 +213,16 @@
         "label": "Campaign Updates"
       }
     }
+  },
+  "supporters": {
+    "enabled": true,
+    "roles": {
+      "1508095049232289833": "Bronze",
+      "1508095202479308901": "Silver",
+      "1508095281777082499": "Gold"
+    },
+    "adminRoleIds": ["1482776177885188287"],
+    "notifyDmOnClaim": true,
+    "notifyDmOnUnlinked": true
   }
 }

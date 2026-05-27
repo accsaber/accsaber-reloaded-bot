@@ -6,6 +6,7 @@ import { MilestoneFeed } from "../services/milestone-feed.js";
 import { MilestoneWebSocket } from "../services/milestone-ws.js";
 import { ScoreFeed } from "../services/score-feed.js";
 import { ScoreWebSocket } from "../services/score-ws.js";
+import { scheduleSupporterReconciliation } from "../services/supporter-reconcile.js";
 import { publishRoleMessage } from "./reaction-roles.js";
 
 export default {
@@ -37,6 +38,10 @@ export default {
       ws.connect();
       client.scoreWs = ws;
       console.log("[ScoreFeed] Score feed started");
+    }
+
+    if (config.supporters?.enabled) {
+      scheduleSupporterReconciliation(client);
     }
 
     if (config.milestoneFeed?.enabled) {

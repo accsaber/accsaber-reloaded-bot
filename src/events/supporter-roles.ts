@@ -1,0 +1,90 @@
+import {
+  Events,
+  type GuildMember,
+  type PartialGuildMember,
+} from "discord.js";
+import { ApiError } from "../api/client.js";
+import { claimSupporterByRole } from "../api/supporters.js";
+import { config } from "../config.js";
+
+export const supporterRoleListener = {
+  name: Events.GuildMemberUpdate,
+  async execute(
+    oldMember: GuildMember | PartialGuildMember,
+    newMember: GuildMember
+  ) {
+    const supporters = config.supporters;
+    if (!supporters?.enabled) return;
+    if (newMember.guild.id !== config.guildId) return;
+
+    const oldRoles = new Set(oldMember.roles.cache.keys());
+    const addedRoles: string[] = [];
+    for (const roleId of newMember.roles.cache.keys()) {
+      if (!oldRoles.has(roleId)) addedRoles.push(roleId);
+    }
+    if (addedRoles.length === 0) return;
+
+    const matchedTiers: { roleId: string; tier: string }[] = [];
+    for (const roleId of addedRoles) {
+      const tier = supporters.roles[roleId];
+      if (tier) matchedTiers.push({ roleId, tier });
+    }
+    if (matchedTiers.length === 0) return;
+
+    let dmSent = false;
+    for (const { roleId, tier } of matchedTiers) {
+      try {
+        const result = await claimSupporterByRole({
+          discordId: newMember.id,
+          tierName: tier,
+          assignedAt: new Date().toISOString(),
+        });
+        if (!result.matched) {
+          console.info(
+            `[Supporters] No unclaimed Ko-fi event for ${newMember.id} tier=${tier} role=${roleId}`
+          );
+          continue;
+        }
+        console.log(
+          `[Supporters] Claimed ${tier} for ${newMember.id} (txn ${result.kofiTransactionId})`
+        );
+        if (supporters.notifyDmOnClaim) {
+          try {
+            await newMember.send(
+              `Thanks for supporting AccSaber! Your **${tier}** tier is active — visit your profile to equip your new items.`
+            );
+          } catch (err) {
+            console.warn(
+              `[Supporters] Could not DM ${newMember.id} after claim:`,
+              err
+            );
+          }
+        }
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) {
+          console.info(
+            `[Supporters] Discord ${newMember.id} not linked; cannot claim ${tier}`
+          );
+          if (supporters.notifyDmOnUnlinked && !dmSent) {
+            dmSent = true;
+            try {
+              await newMember.send(
+                "Link your Discord with `/register` first to claim your supporter perks."
+              );
+            } catch (dmErr) {
+              console.warn(
+                `[Supporters] Could not DM ${newMember.id} about linking:`,
+                dmErr
+              );
+            }
+          }
+          continue;
+        }
+        console.error(
+          `[Supporters] Failed to claim ${tier} for ${newMember.id}:`,
+          err
+        );
+      }
+    }
+  },
+};

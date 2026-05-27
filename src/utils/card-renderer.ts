@@ -25,6 +25,7 @@ import {
   drawRoundedRect,
   fetchImage,
   formatDifficulty,
+  hexWithAlpha,
   numberFmt,
   registerFonts,
   relativeTime,
@@ -67,24 +68,30 @@ export async function renderProfileCard(data: ProfileCardData): Promise<Buffer> 
   let avatarImg: Awaited<ReturnType<typeof loadImage>> | null = null;
   try {
     avatarImg = await fetchImage(data.avatarUrl);
-    ctx.save();
-    ctx.globalAlpha = 0.15;
-    ctx.filter = "blur(40px)";
-    ctx.drawImage(avatarImg, -80, -80, W + 160, H + 160);
-    ctx.restore();
-  } catch { /* solid bg fallback */ }
-
-  const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, "rgba(10, 10, 15, 0.5)");
-  grad.addColorStop(1, "rgba(10, 10, 15, 0.95)");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
+  } catch { /* skip */ }
 
   const cardX = 24;
   const cardY = 20;
   const cardW = W - 48;
   const cardH = H - 40;
-  drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 12, "rgba(20, 20, 31, 0.85)", BG_OVERLAY);
+  drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 12, "#13131c", BG_OVERLAY);
+
+  ctx.save();
+  roundRect(ctx, cardX, cardY, cardW, cardH, 12);
+  ctx.clip();
+  const wash = ctx.createRadialGradient(
+    cardX + cardW - 120,
+    cardY + 40,
+    0,
+    cardX + cardW - 120,
+    cardY + 40,
+    540
+  );
+  wash.addColorStop(0, hexWithAlpha(accent, 0.16));
+  wash.addColorStop(1, hexWithAlpha(accent, 0));
+  ctx.fillStyle = wash;
+  ctx.fillRect(cardX, cardY, cardW, cardH);
+  ctx.restore();
 
   const avSize = 80;
   const avX = 56;
@@ -95,11 +102,7 @@ export async function renderProfileCard(data: ProfileCardData): Promise<Buffer> 
   const borderX = avX - avPad;
   const borderY = avY - avPad;
 
-  ctx.save();
-  ctx.shadowColor = tierHex;
-  ctx.shadowBlur = 16;
   drawRoundedRect(ctx, borderX, borderY, borderSize, borderSize, 12, BG_ELEVATED);
-  ctx.restore();
 
   if (avatarImg) {
     ctx.save();
@@ -171,16 +174,16 @@ export async function renderProfileCard(data: ProfileCardData): Promise<Buffer> 
     );
   }
 
-  const catLabel = CATEGORY_LABEL[data.categoryCode] ?? "Overall";
-  ctx.font = `700 13px ${MONO}`;
-  const catW = ctx.measureText(catLabel).width + 24;
+  const catLabel = (CATEGORY_LABEL[data.categoryCode] ?? "Overall").toUpperCase();
+  ctx.font = `700 11px ${MONO}`;
+  const catW = ctx.measureText(catLabel).width + 18;
   const catX = cardX + cardW - catW - 24;
-  const catY = avY + 6;
+  const catY = avY + 8;
 
-  drawRoundedRect(ctx, catX, catY, catW, 28, 14, "rgba(0,0,0,0.3)", accent);
+  drawRoundedRect(ctx, catX, catY, catW, 20, 4, hexWithAlpha(accent, 0.14));
   ctx.fillStyle = accent;
   ctx.textBaseline = "middle";
-  ctx.fillText(catLabel, catX + 12, catY + 14);
+  ctx.fillText(catLabel, catX + 9, catY + 10);
 
   const statsY = 180;
   const boxW = 185;
@@ -206,15 +209,8 @@ export async function renderProfileCard(data: ProfileCardData): Promise<Buffer> 
 
     drawRoundedRect(ctx, bx, statsY, boxW, boxH, 8, BG_ELEVATED, BG_OVERLAY);
 
-    ctx.save();
-    roundRect(ctx, bx, statsY, boxW, boxH, 8);
-    ctx.clip();
-    ctx.fillStyle = accent;
-    ctx.fillRect(bx, statsY, 3, boxH);
-    ctx.restore();
-
-    ctx.font = `500 11px ${SANS}`;
-    ctx.fillStyle = TEXT_SECONDARY;
+    ctx.font = `500 10px ${MONO}`;
+    ctx.fillStyle = TEXT_TERTIARY;
     ctx.textBaseline = "top";
     ctx.letterSpacing = "0.5px";
     ctx.fillText(box.label, bx + 16, statsY + 14);
@@ -261,26 +257,15 @@ export async function renderProfileCard(data: ProfileCardData): Promise<Buffer> 
     ctx.fillText("No scores yet", statsStartX, scoreStartY);
   }
 
-  const footDivY = H - 64;
-  const footContentY = footDivY + 10;
-
-  ctx.strokeStyle = BG_OVERLAY;
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(statsStartX, footDivY);
-  ctx.lineTo(cardX + cardW - 32, footDivY);
-  ctx.stroke();
-
-  ctx.font = `400 12px ${SANS}`;
-  ctx.fillStyle = TEXT_TERTIARY;
-  ctx.textBaseline = "middle";
-  ctx.fillText("accsaberreloaded.com", statsStartX, footContentY + 12);
-
+  const footY = H - 44;
   try {
     const logoBuf = await readFile(join(ASSETS_DIR, "logo.png"));
     const logoImg = await loadImage(logoBuf);
-    const logoSize = 24;
-    ctx.drawImage(logoImg, cardX + cardW - 32 - logoSize, footContentY + 1, logoSize, logoSize);
+    const logoSize = 16;
+    ctx.save();
+    ctx.globalAlpha = 0.45;
+    ctx.drawImage(logoImg, cardX + cardW - 32 - logoSize, footY, logoSize, logoSize);
+    ctx.restore();
   } catch { /* logo not available */ }
 
   return canvas.toBuffer("image/png");
@@ -333,10 +318,7 @@ async function drawScoreRow(
   const timeAgo = relativeTime(score.timeSet);
 
   const rankText = `#${score.rank}`;
-  const rankColor = score.rank === 1 ? "#ffd700"
-    : score.rank === 2 ? "#c0c0c0"
-      : score.rank === 3 ? "#cd7f32"
-        : TEXT_TERTIARY;
+  const rankColor = score.rank === 1 ? scoreCatColor : TEXT_PRIMARY;
 
   const rightText = `${acc}%  |  ${ap}ap${isFC ? "  FC" : ""}  ${rankText}`;
   ctx.font = `500 13px ${MONO}`;
@@ -357,7 +339,7 @@ async function drawScoreRow(
   const rankW = ctx.measureText(rankText).width;
   ctx.fillText(rankText, cardX + cardW - 32 - rankW, topLineY + 1);
 
-  const wapSuffix = ` · (${score.weightedAp.toFixed(2)} weighted)`;
+  const wapSuffix = `  ·  weighted ${score.weightedAp.toFixed(2)}`;
   ctx.font = `400 11px ${MONO}`;
   const fullW = ctx.measureText(timeAgo + wapSuffix).width;
   const botRightX = cardX + cardW - 32 - fullW;
@@ -384,19 +366,11 @@ async function drawScoreRow(
 }
 
 async function drawCoverArt(
-  ctx: Ctx, coverUrl: string, x: number, y: number, size: number, glowPad: number
+  ctx: Ctx, coverUrl: string, x: number, y: number, size: number, _glowPad: number
 ): Promise<void> {
   let coverImg: Awaited<ReturnType<typeof loadImage>> | null = null;
   if (coverUrl) {
     try { coverImg = await fetchImage(coverUrl); } catch { /* skip */ }
-  }
-
-  if (coverImg) {
-    ctx.save();
-    ctx.globalAlpha = 0.35;
-    ctx.filter = "blur(8px) saturate(1.8)";
-    ctx.drawImage(coverImg, x - glowPad, y - glowPad, size + glowPad * 2, size + glowPad * 2);
-    ctx.restore();
   }
 
   drawRoundedRect(ctx, x, y, size, size, 5, BG_OVERLAY);
