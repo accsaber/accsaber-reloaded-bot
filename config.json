@@ -184,6 +184,14 @@
       }
     }
   },
+  "missionFeed": {
+    "enabled": true,
+    "channelId": "1509851271635406898",
+    "wsUrl": null,
+    "bands": ["extreme"],
+    "messageTemplate": "Just conquered an EXTREME {pool} mission!",
+    "maxCompletedAgeSeconds": 600
+  },
   "reactionRoles": {
     "channelId": "1484645896997175507",
     "roles": {

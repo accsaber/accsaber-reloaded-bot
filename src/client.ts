@@ -9,6 +9,7 @@ import {
   type SlashCommandSubcommandsOnlyBuilder,
 } from "discord.js";
 import type { MilestoneWebSocket } from "./services/milestone-ws.js";
+import type { MissionWebSocket } from "./services/mission-ws.js";
 import type { ScoreWebSocket } from "./services/score-ws.js";
 
 export interface Command {
@@ -23,6 +24,7 @@ export class ArBot extends Client {
   commands = new Collection<string, Command>();
   scoreWs?: ScoreWebSocket;
   milestoneWs?: MilestoneWebSocket;
+  missionWs?: MissionWebSocket;
 
   constructor() {
     super({

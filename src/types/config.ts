@@ -116,6 +116,15 @@ export interface MilestoneFeedConfig {
   maxCompletedAgeSeconds?: number;
 }
 
+export interface MissionFeedConfig {
+  enabled: boolean;
+  channelId: string;
+  wsUrl?: string | null;
+  bands: string[];
+  messageTemplate: string;
+  maxCompletedAgeSeconds?: number;
+}
+
 export interface LevelTierRoles {
   newcomer: string;
   apprentice: string;
@@ -164,5 +173,6 @@ export interface Config {
   reactionRoles?: ReactionRolesConfig;
   scoreFeed?: ScoreFeedConfig;
   milestoneFeed?: MilestoneFeedConfig;
+  missionFeed?: MissionFeedConfig;
   supporters?: SupportersConfig;
 }

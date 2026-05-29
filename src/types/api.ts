@@ -209,3 +209,40 @@ export interface MilestoneHolderResponse {
   country: string;
   completedAt: string;
 }
+
+export type MissionType =
+  | "PLAY_N_MAPS"
+  | "XP_IN_WINDOW"
+  | "ACC_ON_MAP"
+  | "AP_ON_MAP"
+  | "PB_SPECIFIC_MAP"
+  | "PB_ABOVE_THRESHOLD"
+  | "SNIPE_PLAYER_ON_MAP"
+  | "STREAK_ON_MAP"
+  | "STREAK_N_IN_CATEGORY"
+  | "COMEBACK_PB"
+  | "SCORES_N";
+
+export type MissionPool = "daily" | "weekly" | string;
+export type MissionBand = "easy" | "medium" | "hard" | "extreme";
+
+export interface MissionCompletedPayload {
+  userId: string;
+  userName: string;
+  userCountry?: string;
+  userAvatarUrl?: string;
+  completedAt: string;
+  missionId: string;
+  templateId: string;
+  templateCode: string;
+  templateName: string;
+  templateDescription: string;
+  type: MissionType;
+  pool: MissionPool;
+  band: MissionBand;
+  categoryId?: string;
+  categoryCode?: string;
+  targetMapDifficultyId?: string;
+  xpAwarded?: number;
+  itemAwardedId?: string;
+}

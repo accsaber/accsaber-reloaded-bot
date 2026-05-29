@@ -1,9 +1,14 @@
 import {
+  DiscordAPIError,
   Events,
   type GuildMember,
   type PartialGuildMember,
 } from "discord.js";
 import { ApiError } from "../api/client.js";
+
+const DM_BLOCKED_CODES = new Set([50007, 50278]);
+const isDmBlocked = (err: unknown): boolean =>
+  err instanceof DiscordAPIError && DM_BLOCKED_CODES.has(Number(err.code));
 import { claimSupporterByRole } from "../api/supporters.js";
 import { config } from "../config.js";
 
@@ -54,10 +59,16 @@ export const supporterRoleListener = {
               `Thanks for supporting AccSaber! Your **${tier}** tier is active — visit your profile to equip your new items.`
             );
           } catch (err) {
-            console.warn(
-              `[Supporters] Could not DM ${newMember.id} after claim:`,
-              err
-            );
+            if (isDmBlocked(err)) {
+              console.info(
+                `[Supporters] DMs closed for ${newMember.id}; skipped claim notice`
+              );
+            } else {
+              console.warn(
+                `[Supporters] Could not DM ${newMember.id} after claim:`,
+                err
+              );
+            }
           }
         }
       } catch (err) {
@@ -72,10 +83,16 @@ export const supporterRoleListener = {
                 "Link your Discord with `/register` first to claim your supporter perks."
               );
             } catch (dmErr) {
-              console.warn(
-                `[Supporters] Could not DM ${newMember.id} about linking:`,
-                dmErr
-              );
+              if (isDmBlocked(dmErr)) {
+                console.info(
+                  `[Supporters] DMs closed for ${newMember.id}; skipped link prompt`
+                );
+              } else {
+                console.warn(
+                  `[Supporters] Could not DM ${newMember.id} about linking:`,
+                  dmErr
+                );
+              }
             }
           }
           continue;

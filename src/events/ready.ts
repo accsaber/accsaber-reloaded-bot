@@ -4,6 +4,8 @@ import type { ArBot } from "../client.js";
 import { config } from "../config.js";
 import { MilestoneFeed } from "../services/milestone-feed.js";
 import { MilestoneWebSocket } from "../services/milestone-ws.js";
+import { MissionFeed } from "../services/mission-feed.js";
+import { MissionWebSocket } from "../services/mission-ws.js";
 import { ScoreFeed } from "../services/score-feed.js";
 import { ScoreWebSocket } from "../services/score-ws.js";
 import { scheduleSupporterReconciliation } from "../services/supporter-reconcile.js";
@@ -55,6 +57,19 @@ export default {
       ws.connect();
       client.milestoneWs = ws;
       console.log("[MilestoneFeed] Milestone feed started");
+    }
+
+    if (config.missionFeed?.enabled) {
+      const feed = new MissionFeed(client);
+      const ws = new MissionWebSocket();
+      ws.onMission((payload) => {
+        feed.handlePayload(payload).catch((err) => {
+          console.error("[MissionFeed] Error handling payload:", err);
+        });
+      });
+      ws.connect();
+      client.missionWs = ws;
+      console.log("[MissionFeed] Mission feed started");
     }
   },
 };

@@ -26,6 +26,13 @@ function loadConfig(): Config {
     }
   }
 
+  if (parsed.missionFeed) {
+    const mf = parsed.missionFeed;
+    if (!mf.channelId) required.push("missionFeed.channelId");
+    if (!mf.bands || mf.bands.length === 0) required.push("missionFeed.bands");
+    if (!mf.messageTemplate) required.push("missionFeed.messageTemplate");
+  }
+
   if (required.length > 0) {
     throw new Error(`Missing required config fields: ${required.join(", ")}`);
   }

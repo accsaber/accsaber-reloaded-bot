@@ -267,6 +267,43 @@ export function drawTrophyIcon(
   ctx.restore();
 }
 
+export function drawTargetIcon(
+  ctx: Ctx,
+  x: number,
+  y: number,
+  size: number,
+  color: string,
+  glow: { color: string; blur: number } | null = null
+): void {
+  ctx.save();
+  ctx.translate(x, y);
+  if (glow) {
+    ctx.shadowColor = glow.color;
+    ctx.shadowBlur = glow.blur;
+  }
+  const s = size / 24;
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  ctx.lineWidth = 2 * s;
+  ctx.beginPath();
+  ctx.arc(12 * s, 12 * s, 10 * s, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.lineWidth = 1.8 * s;
+  ctx.beginPath();
+  ctx.arc(12 * s, 12 * s, 6.5 * s, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(12 * s, 12 * s, 2.6 * s, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
 export function formatDifficulty(diff: string): string {
   const map: Record<string, string> = {
     EASY: "Easy",
