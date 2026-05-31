@@ -15,6 +15,7 @@ import {
   TEXT_TERTIARY,
   drawFlagIcon,
   drawRoundedRect,
+  drawStackIcon,
   drawTrophyIcon,
   fetchImage,
   hexWithAlpha,
@@ -25,6 +26,20 @@ import {
 import { getTierForLevel } from "./roles.js";
 
 export type MilestoneTriggerKind = "first" | "rare" | "diamond_plus";
+
+export interface MilestoneSetCardData {
+  user: { id: string; name: string; country: string; avatarUrl: string };
+  set: {
+    id: string;
+    title: string;
+    description?: string;
+    bonusXp: number;
+  };
+  title: string;
+  subtitle?: string;
+  accentColor: string;
+  level?: number;
+}
 
 export interface MilestoneCardData {
   user: { id: string; name: string; country: string; avatarUrl: string };
@@ -273,6 +288,202 @@ export async function renderMilestoneCard(
     ctx.fillText(chipLabel, chipX + 8, curY + 15);
     ctx.textBaseline = "top";
   }
+
+  const footY = CARD_Y + CARD_H - 22;
+  try {
+    const logoBuf = await readFile(join(ASSETS_DIR, "logo.png"));
+    const logoImg = await loadImage(logoBuf);
+    const logoSize = 14;
+    ctx.save();
+    ctx.globalAlpha = 0.45;
+    ctx.drawImage(logoImg, rightEdge - logoSize, footY, logoSize, logoSize);
+    ctx.restore();
+  } catch {
+    /* logo not available */
+  }
+
+  return {
+    image: canvas.toBuffer("image/png"),
+    profileUrl: `https://accsaberreloaded.com/players/${user.id}`,
+  };
+}
+
+export async function renderMilestoneSetCard(
+  data: MilestoneSetCardData
+): Promise<MilestoneCardResult> {
+  registerFonts();
+
+  const { user, set, accentColor } = data;
+  const washColor = accentColor;
+
+  const tierInfo = data.level ? getTierForLevel(data.level) : undefined;
+  const levelTierHex = tierInfo
+    ? `#${tierInfo.color.toString(16).padStart(6, "0")}`
+    : TEXT_SECONDARY;
+
+  const contentH = 210;
+  const H = CARD_Y * 2 + contentH;
+  const CARD_H = contentH;
+
+  const canvas = createCanvas(W, H);
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = BG_BASE;
+  ctx.fillRect(0, 0, W, H);
+
+  let avatarImg: Awaited<ReturnType<typeof loadImage>> | null = null;
+  try {
+    avatarImg = await fetchImage(user.avatarUrl);
+  } catch {
+    /* skip */
+  }
+
+  drawRoundedRect(ctx, CARD_X, CARD_Y, CARD_W, CARD_H, 12, "#13131c", BG_OVERLAY);
+
+  ctx.save();
+  roundRect(ctx, CARD_X, CARD_Y, CARD_W, CARD_H, 12);
+  ctx.clip();
+  const wash = ctx.createRadialGradient(
+    CARD_X + CARD_W - 60,
+    CARD_Y + 20,
+    0,
+    CARD_X + CARD_W - 60,
+    CARD_Y + 20,
+    420
+  );
+  wash.addColorStop(0, hexWithAlpha(washColor, 0.18));
+  wash.addColorStop(1, hexWithAlpha(washColor, 0));
+  ctx.fillStyle = wash;
+  ctx.fillRect(CARD_X, CARD_Y, CARD_W, CARD_H);
+  ctx.restore();
+
+  const leftX = CARD_X + PAD + 4;
+  const rightEdge = CARD_X + CARD_W - PAD;
+  let curY = CARD_Y + PAD - 2;
+
+  ctx.textBaseline = "top";
+
+  const topRightX = rightEdge;
+
+  const avSize = 50;
+  const avPad = 2;
+  const borderSize = avSize + avPad * 2;
+
+  drawRoundedRect(
+    ctx,
+    leftX - avPad,
+    curY - avPad,
+    borderSize,
+    borderSize,
+    10,
+    BG_ELEVATED
+  );
+
+  if (avatarImg) {
+    ctx.save();
+    roundRect(ctx, leftX - avPad, curY - avPad, borderSize, borderSize, 10);
+    ctx.clip();
+    ctx.drawImage(avatarImg, leftX - avPad, curY - avPad, borderSize, borderSize);
+    ctx.restore();
+  }
+
+  roundRect(ctx, leftX - avPad, curY - avPad, borderSize, borderSize, 10);
+  ctx.strokeStyle = levelTierHex;
+  ctx.lineWidth = avPad;
+  ctx.stroke();
+
+  const nameX = leftX + avSize + 12;
+  ctx.font = `700 17px ${SANS}`;
+  ctx.fillStyle = TEXT_PRIMARY;
+  let displayName = user.name;
+  if (displayName.length > 24) displayName = displayName.slice(0, 22) + "...";
+  ctx.fillText(displayName, nameX, curY + 1);
+
+  const nameW = ctx.measureText(displayName).width;
+  const country = user.country?.toUpperCase();
+  if (country && country.length === 2) {
+    ctx.font = `700 9px ${MONO}`;
+    const tagW = ctx.measureText(country).width + 10;
+    drawRoundedRect(ctx, nameX + nameW + 8, curY + 3, tagW, 15, 3, BG_OVERLAY);
+    ctx.fillStyle = TEXT_SECONDARY;
+    ctx.textBaseline = "middle";
+    ctx.fillText(country, nameX + nameW + 13, curY + 10);
+    ctx.textBaseline = "top";
+  }
+
+  ctx.font = `600 12px ${SANS}`;
+  ctx.fillStyle = accentColor;
+  const maxTitleW = topRightX - nameX - 12;
+  let titleText = data.title;
+  while (ctx.measureText(titleText).width > maxTitleW && titleText.length > 10) {
+    titleText = titleText.slice(0, -4) + "...";
+  }
+  ctx.fillText(titleText, nameX, curY + 24);
+
+  if (data.subtitle) {
+    ctx.font = `500 11px ${SANS}`;
+    ctx.fillStyle = TEXT_SECONDARY;
+    ctx.fillText(data.subtitle, nameX, curY + 40);
+  }
+
+  curY += avSize + 18;
+
+  const iconSize = 56;
+  const iconX = leftX;
+  const iconY = curY;
+
+  drawStackIcon(ctx, iconX, iconY, iconSize, accentColor, {
+    color: accentColor,
+    blur: 26,
+  });
+
+  const titleX = iconX + iconSize + 14;
+  const titleMaxW = rightEdge - titleX;
+
+  ctx.font = `700 10px ${MONO}`;
+  ctx.fillStyle = accentColor;
+  ctx.fillText("MILESTONE SET", titleX, iconY + 2);
+
+  ctx.font = `700 18px ${SANS}`;
+  ctx.fillStyle = TEXT_PRIMARY;
+  let setTitle = set.title;
+  while (ctx.measureText(setTitle).width > titleMaxW && setTitle.length > 10) {
+    setTitle = setTitle.slice(0, -4) + "...";
+  }
+  ctx.fillText(setTitle, titleX, iconY + 16);
+
+  if (set.description) {
+    ctx.font = `400 12px ${SANS}`;
+    ctx.fillStyle = TEXT_SECONDARY;
+    const desc = wrapText(ctx, set.description, titleMaxW, 2);
+    let y = iconY + 38;
+    for (const line of desc) {
+      ctx.fillText(line, titleX, y);
+      y += 16;
+    }
+  }
+
+  curY += iconSize + 14;
+
+  const xpStr = numberFmt(set.bonusXp, 0);
+  ctx.font = `700 28px ${MONO}`;
+  const xpW = ctx.measureText(xpStr).width;
+  ctx.fillStyle = TEXT_PRIMARY;
+  ctx.fillText(xpStr, leftX, curY);
+
+  ctx.font = `700 11px ${MONO}`;
+  ctx.fillStyle = washColor;
+  ctx.fillText("BONUS XP", leftX + xpW + 6, curY + 14);
+
+  const chipLabel = "SET COMPLETE";
+  ctx.font = `700 10px ${MONO}`;
+  const chipW = ctx.measureText(chipLabel).width + 16;
+  const chipX = rightEdge - chipW;
+  drawRoundedRect(ctx, chipX, curY + 6, chipW, 18, 4, hexWithAlpha(accentColor, 0.16));
+  ctx.fillStyle = accentColor;
+  ctx.textBaseline = "middle";
+  ctx.fillText(chipLabel, chipX + 8, curY + 15);
+  ctx.textBaseline = "top";
 
   const footY = CARD_Y + CARD_H - 22;
   try {

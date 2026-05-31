@@ -182,6 +182,11 @@
         "messageTemplate": "Just unlocked a {tier} tier {milestoneType}!",
         "color": "#5DADE2"
       }
+    },
+    "setCompletion": {
+      "enabled": true,
+      "messageTemplate": "Just completed a milestone set!",
+      "color": "#ec4899"
     }
   },
   "missionFeed": {

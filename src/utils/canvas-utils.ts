@@ -267,6 +267,50 @@ export function drawTrophyIcon(
   ctx.restore();
 }
 
+export function drawStackIcon(
+  ctx: Ctx,
+  x: number,
+  y: number,
+  size: number,
+  color: string,
+  glow: { color: string; blur: number } | null = null
+): void {
+  ctx.save();
+  ctx.translate(x, y);
+  if (glow) {
+    ctx.shadowColor = glow.color;
+    ctx.shadowBlur = glow.blur;
+  }
+  const s = size / 24;
+  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = 1.2 * s;
+
+  const plateW = 17 * s;
+  const plateH = 3.6 * s;
+  const radius = 1.6 * s;
+  const xStart = 3.5 * s;
+  const ys = [4.5 * s, 10.2 * s, 15.9 * s];
+
+  for (let i = 0; i < ys.length; i++) {
+    ctx.globalAlpha = i === 0 ? 0.6 : i === 1 ? 0.82 : 1;
+    ctx.beginPath();
+    ctx.roundRect(xStart, ys[i], plateW, plateH, radius);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.beginPath();
+  ctx.moveTo(xStart + 0.5 * s, ys[2] + plateH + 2 * s);
+  ctx.lineTo(xStart + plateW - 0.5 * s, ys[2] + plateH + 2 * s);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 export function drawTargetIcon(
   ctx: Ctx,
   x: number,

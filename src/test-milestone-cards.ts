@@ -1,7 +1,9 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import {
   renderMilestoneCard,
+  renderMilestoneSetCard,
   type MilestoneCardData,
+  type MilestoneSetCardData,
 } from "./utils/milestone-card-renderer.js";
 
 const USER = {
@@ -128,6 +130,53 @@ const cards: { name: string; data: MilestoneCardData }[] = [
   },
 ];
 
+const setCards: { name: string; data: MilestoneSetCardData }[] = [
+  {
+    name: "standard",
+    data: {
+      user: USER,
+      set: {
+        id: "set-1",
+        title: "Accuracy Foundations",
+        description: "Complete every Bronze tier milestone in the Accuracy Foundations collection.",
+        bonusXp: 2500,
+      },
+      title: "Just completed a milestone set!",
+      accentColor: "#ec4899",
+      level: 45,
+    },
+  },
+  {
+    name: "high-tier",
+    data: {
+      user: USER,
+      set: {
+        id: "set-2",
+        title: "Apex Collection",
+        description: "Achieve every Apex tier milestone across all categories.",
+        bonusXp: 25000,
+      },
+      title: "Just completed a milestone set!",
+      accentColor: "#ec4899",
+      level: 102,
+    },
+  },
+  {
+    name: "no-description",
+    data: {
+      user: USER,
+      set: {
+        id: "set-3",
+        title: "Quickstart",
+        bonusXp: 500,
+      },
+      title: "Just completed a milestone set!",
+      accentColor: "#ec4899",
+      level: 8,
+    },
+  },
+];
+
 async function main() {
   mkdirSync("test-output", { recursive: true });
 
@@ -136,6 +185,13 @@ async function main() {
     const result = await renderMilestoneCard(card.data);
     writeFileSync(`test-output/milestone-${card.name}.png`, result.image);
     console.log(`  -> test-output/milestone-${card.name}.png`);
+  }
+
+  for (const card of setCards) {
+    console.log(`Rendering set-${card.name}...`);
+    const result = await renderMilestoneSetCard(card.data);
+    writeFileSync(`test-output/milestone-set-${card.name}.png`, result.image);
+    console.log(`  -> test-output/milestone-set-${card.name}.png`);
   }
 
   console.log("\nDone! Check the test-output/ directory.");

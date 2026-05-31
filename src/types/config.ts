@@ -106,11 +106,18 @@ export interface MilestoneFeedRulesConfig {
   diamondPlus: MilestoneDiamondPlusRuleConfig;
 }
 
+export interface MilestoneSetCompletionConfig {
+  enabled: boolean;
+  messageTemplate: string;
+  color: string;
+}
+
 export interface MilestoneFeedConfig {
   enabled: boolean;
   channelId: string;
   wsUrl?: string | null;
   rules: MilestoneFeedRulesConfig;
+  setCompletion: MilestoneSetCompletionConfig;
   completionStatsTtlSeconds: number;
   maxMilestonesPerPayload?: number;
   maxCompletedAgeSeconds?: number;

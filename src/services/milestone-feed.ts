@@ -17,12 +17,15 @@ import { config } from "../config.js";
 import type {
   MilestoneCompletedPayload,
   MilestonePayloadEntry,
+  MilestoneSetPayloadEntry,
   MilestoneTier,
 } from "../types/api.js";
 import type { MilestoneFeedConfig } from "../types/config.js";
 import {
   renderMilestoneCard,
+  renderMilestoneSetCard,
   type MilestoneCardData,
+  type MilestoneSetCardData,
   type MilestoneTriggerKind,
 } from "../utils/milestone-card-renderer.js";
 import { renderTemplate } from "../utils/templates.js";
@@ -78,7 +81,8 @@ export class MilestoneFeed {
     if (!this.cfg.enabled) return;
 
     const milestones = payload.milestones ?? [];
-    if (milestones.length === 0) return;
+    const sets = payload.sets ?? [];
+    if (milestones.length === 0 && sets.length === 0) return;
 
     const maxPayload = this.cfg.maxMilestonesPerPayload ?? DEFAULT_MAX_PAYLOAD;
     if (milestones.length > maxPayload) {
@@ -103,6 +107,7 @@ export class MilestoneFeed {
     this.pruneDedupe();
 
     const cards: MilestoneCardData[] = [];
+    const setCards: MilestoneSetCardData[] = [];
 
     for (const milestone of milestones) {
       let trigger: TriggerResult | null = null;
@@ -149,7 +154,21 @@ export class MilestoneFeed {
       if (card) cards.push(card);
     }
 
-    if (cards.length === 0) return;
+    if (this.cfg.setCompletion.enabled) {
+      for (const set of sets) {
+        const dedupeKey = `${payload.userId}:set:${set.id}`;
+        if (this.dedupe.has(dedupeKey)) continue;
+        this.dedupe.set(dedupeKey, { expiresAt: Date.now() + DEDUPE_TTL_MS });
+
+        const card = await this.buildSetCard(payload, set).catch((err) => {
+          console.error("[MilestoneFeed] Set card build failed:", err);
+          return null;
+        });
+        if (card) setCards.push(card);
+      }
+    }
+
+    if (cards.length === 0 && setCards.length === 0) return;
 
     try {
       const channel = await this.getChannel();
@@ -169,6 +188,21 @@ export class MilestoneFeed {
 
         await channel.send({
           files: [new AttachmentBuilder(result.image, { name: "milestone-feed.png" })],
+          components: [row],
+        });
+      }
+      for (const card of setCards) {
+        const result = await renderMilestoneSetCard(card);
+
+        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+          new ButtonBuilder()
+            .setLabel("Profile")
+            .setStyle(ButtonStyle.Link)
+            .setURL(result.profileUrl)
+        );
+
+        await channel.send({
+          files: [new AttachmentBuilder(result.image, { name: "milestone-set-feed.png" })],
           components: [row],
         });
       }
@@ -252,6 +286,40 @@ export class MilestoneFeed {
       kind: "diamond_plus",
       title: renderTemplate(diamondPlus.messageTemplate, vars),
       color: diamondPlus.color,
+    };
+  }
+
+  private async buildSetCard(
+    payload: MilestoneCompletedPayload,
+    set: MilestoneSetPayloadEntry
+  ): Promise<MilestoneSetCardData> {
+    const { setCompletion } = this.cfg;
+    const levelResult = await Promise.allSettled([getUserLevel(payload.userId)]);
+    const level =
+      levelResult[0].status === "fulfilled" ? levelResult[0].value.level : undefined;
+
+    const vars = {
+      playerName: payload.userName,
+      setTitle: set.title,
+      bonusXp: set.bonusXp,
+    };
+
+    return {
+      user: {
+        id: payload.userId,
+        name: payload.userName,
+        country: payload.userCountry,
+        avatarUrl: payload.userAvatarUrl,
+      },
+      set: {
+        id: set.id,
+        title: set.title,
+        description: set.description,
+        bonusXp: set.bonusXp,
+      },
+      title: renderTemplate(setCompletion.messageTemplate, vars),
+      accentColor: setCompletion.color,
+      level,
     };
   }
 
