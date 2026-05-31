@@ -44,6 +44,13 @@ interface DedupeEntry {
   expiresAt: number;
 }
 
+interface TriggerResult {
+  kind: MilestoneTriggerKind;
+  title: string;
+  subtitle?: string;
+  color: string;
+}
+
 export class MilestoneFeed {
   private readonly client: Client;
   private readonly cfg: MilestoneFeedConfig;
@@ -98,10 +105,37 @@ export class MilestoneFeed {
     const cards: MilestoneCardData[] = [];
 
     for (const milestone of milestones) {
-      const trigger = await this.evaluate(payload, milestone).catch((err) => {
-        console.error("[MilestoneFeed] Trigger evaluation failed:", err);
-        return null;
-      });
+      let trigger: TriggerResult | null = null;
+
+      let firstFired = false;
+      if (this.cfg.rules.firstCompletion.enabled) {
+        const result = await this.checkFirstCompletion(payload, milestone).catch((err) => {
+          console.error("[MilestoneFeed] Trigger check failed:", err);
+          return null;
+        });
+        if (result) {
+          trigger = result;
+          firstFired = true;
+        }
+      }
+
+      let rareFired = false;
+      if (!firstFired && this.cfg.rules.rare.enabled) {
+        const result = await this.checkRare(payload, milestone).catch((err) => {
+          console.error("[MilestoneFeed] Trigger check failed:", err);
+          return null;
+        });
+        if (result) {
+          trigger = result;
+          rareFired = true;
+        }
+      }
+
+      if (!firstFired && !rareFired && this.cfg.rules.diamondPlus.enabled) {
+        const result = this.checkDiamondPlus(payload, milestone);
+        if (result) trigger = result;
+      }
+
       if (!trigger) continue;
 
       const dedupeKey = `${payload.userId}:${milestone.id}`;
@@ -143,73 +177,88 @@ export class MilestoneFeed {
     }
   }
 
-  private async evaluate(
+  private async checkFirstCompletion(
     payload: MilestoneCompletedPayload,
     milestone: MilestonePayloadEntry
-  ): Promise<{ kind: MilestoneTriggerKind; title: string; subtitle?: string; color: string } | null> {
-    const { firstCompletion, rare, diamondPlus } = this.cfg.rules;
+  ): Promise<TriggerResult | null> {
+    const { firstCompletion } = this.cfg.rules;
 
-    const baseVars = {
+    const holders = await getMilestoneHolders(milestone.id, {
+      page: 0,
+      size: 1,
+      sort: "completedAt,asc",
+    });
+    if (
+      holders.totalElements !== 1 ||
+      holders.content[0]?.userId !== payload.userId
+    ) {
+      return null;
+    }
+
+    const vars = {
       milestoneType: milestone.type,
       tier: milestone.tier,
       playerName: payload.userName,
     };
+    return {
+      kind: "first",
+      title: renderTemplate(firstCompletion.messageTemplate, vars),
+      color: firstCompletion.color,
+    };
+  }
 
-    if (firstCompletion.enabled) {
-      try {
-        const holders = await getMilestoneHolders(milestone.id, {
-          page: 0,
-          size: 1,
-          sort: "completedAt,asc",
-        });
-        if (
-          holders.totalElements === 1 &&
-          holders.content[0]?.userId === payload.userId
-        ) {
-          return {
-            kind: "first",
-            title: renderTemplate(firstCompletion.messageTemplate, baseVars),
-            color: firstCompletion.color,
-          };
-        }
-      } catch (err) {
-        console.error("[MilestoneFeed] Holder lookup failed:", err);
-      }
+  private async checkRare(
+    payload: MilestoneCompletedPayload,
+    milestone: MilestonePayloadEntry
+  ): Promise<TriggerResult | null> {
+    const { rare } = this.cfg.rules;
+
+    const stats = await getCompletionStatsById(milestone.id);
+    if (
+      !stats ||
+      stats.totalPlayers < rare.minPlayersToCount ||
+      stats.completionPercentage >= rare.percentageThreshold
+    ) {
+      return null;
     }
 
-    if (rare.enabled) {
-      const stats = await getCompletionStatsById(milestone.id);
-      if (
-        stats &&
-        stats.totalPlayers >= rare.minPlayersToCount &&
-        stats.completionPercentage < rare.percentageThreshold
-      ) {
-        const pct = stats.completionPercentage.toFixed(2);
-        const vars = { ...baseVars, percentage: pct };
-        return {
-          kind: "rare",
-          title: renderTemplate(rare.messageTemplate, vars),
-          subtitle: renderTemplate(rare.subtitleTemplate, vars),
-          color: rare.color,
-        };
-      }
-    }
+    const vars = {
+      milestoneType: milestone.type,
+      tier: milestone.tier,
+      playerName: payload.userName,
+      percentage: stats.completionPercentage.toFixed(2),
+    };
+    return {
+      kind: "rare",
+      title: renderTemplate(rare.messageTemplate, vars),
+      subtitle: renderTemplate(rare.subtitleTemplate, vars),
+      color: rare.color,
+    };
+  }
 
-    if (diamondPlus.enabled && diamondPlus.tiers.includes(milestone.tier)) {
-      return {
-        kind: "diamond_plus",
-        title: renderTemplate(diamondPlus.messageTemplate, baseVars),
-        color: diamondPlus.color,
-      };
-    }
+  private checkDiamondPlus(
+    payload: MilestoneCompletedPayload,
+    milestone: MilestonePayloadEntry
+  ): TriggerResult | null {
+    const { diamondPlus } = this.cfg.rules;
+    if (!diamondPlus.tiers.includes(milestone.tier)) return null;
 
-    return null;
+    const vars = {
+      milestoneType: milestone.type,
+      tier: milestone.tier,
+      playerName: payload.userName,
+    };
+    return {
+      kind: "diamond_plus",
+      title: renderTemplate(diamondPlus.messageTemplate, vars),
+      color: diamondPlus.color,
+    };
   }
 
   private async buildCard(
     payload: MilestoneCompletedPayload,
     milestone: MilestonePayloadEntry,
-    trigger: { kind: MilestoneTriggerKind; title: string; subtitle?: string; color: string }
+    trigger: TriggerResult
   ): Promise<MilestoneCardData> {
     const [levelResult, categoryResult] = await Promise.allSettled([
       getUserLevel(payload.userId),
