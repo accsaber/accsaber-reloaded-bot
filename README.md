@@ -25,7 +25,7 @@ cp config.example.json config.json
 - `clientId` - Bot application ID from the Discord Developer Portal
 - `guildId` - Your Discord server ID
 - `allowedChannels` - Array of channel IDs where commands are allowed (empty = all channels)
-- `roles.player` - Role ID assigned on first registration
+- `roles.player` - Role ID assigned to linked players on `/update`
 - `roles.levelTiers.*` - Role IDs for each level tier (Newcomer through Ascendant)
 
 3. Create a `.env` file with your bot token:
@@ -52,8 +52,10 @@ npm run dev
 
 | Command | Description |
 |---------|-------------|
-| `/register` | Link your Discord account to your AccSaber profile (BeatLeader URL, ScoreSaber URL, or player ID) |
 | `/update` | Sync your Discord roles based on your current AccSaber level |
+
+Accounts are linked on the website, not through the bot: signing in at
+https://accsaberreloaded.com with Discord creates the link the bot reads.
 
 ## Scripts
 

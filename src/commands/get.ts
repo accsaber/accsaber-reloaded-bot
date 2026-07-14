@@ -7,7 +7,7 @@ import { getUserStatsDiff } from "../api/statistics.js";
 import { getUser, getUserAllStatistics, getUserLevel } from "../api/users.js";
 import type { Command } from "../client.js";
 import { renderProfileCard } from "../utils/card-renderer.js";
-import { errorEmbed } from "../utils/embeds.js";
+import { errorEmbed, linkPromptEmbed } from "../utils/embeds.js";
 
 const get: Command = {
   data: new SlashCommandBuilder()
@@ -58,9 +58,8 @@ const get: Command = {
         if (err instanceof ApiError && err.status === 404) {
           await interaction.editReply({
             embeds: [
-              errorEmbed(
-                "Not Registered",
-                "You haven't linked your account yet. Use `/register` or provide a `user-id`."
+              linkPromptEmbed(
+                "You haven't linked your Discord account yet. You can also pass a `user-id` to look up any player."
               ),
             ],
           });

@@ -1,5 +1,7 @@
 import { EmbedBuilder } from "discord.js";
 
+export const WEBSITE_URL = "https://accsaberreloaded.com";
+
 export const Colors = {
   category: {
     trueAcc: 0x22c55e,
@@ -62,6 +64,13 @@ export function infoEmbed(title: string, description: string): EmbedBuilder {
     .setColor(Colors.semantic.info)
     .setTitle(title)
     .setDescription(description);
+}
+
+export function linkPromptEmbed(intro: string): EmbedBuilder {
+  return errorEmbed(
+    "Account Not Linked",
+    `${intro}\n\nLinking is only done on the website — the bot can't do it for you. Sign in at ${WEBSITE_URL} with your Discord account and you'll be linked automatically.`
+  );
 }
 
 export function warningEmbed(

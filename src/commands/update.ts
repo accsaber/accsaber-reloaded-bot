@@ -3,7 +3,7 @@ import type { Command } from "../client.js";
 import { ApiError } from "../api/client.js";
 import { getDiscordLink } from "../api/discord-links.js";
 import { getUserLevel } from "../api/users.js";
-import { errorEmbed } from "../utils/embeds.js";
+import { errorEmbed, linkPromptEmbed } from "../utils/embeds.js";
 import { syncLevelRoles } from "../utils/roles.js";
 import { config } from "../config.js";
 
@@ -22,9 +22,8 @@ const update: Command = {
       if (err instanceof ApiError && err.status === 404) {
         await interaction.editReply({
           embeds: [
-            errorEmbed(
-              "Not Registered",
-              "You need to link your account first. Use `/register`."
+            linkPromptEmbed(
+              "You need to link your Discord account before your roles can be updated."
             ),
           ],
         });
@@ -44,6 +43,11 @@ const update: Command = {
     }
 
     const member = await guild.members.fetch(interaction.user.id);
+
+    if (config.roles.player && !member.roles.cache.has(config.roles.player)) {
+      await member.roles.add(config.roles.player);
+    }
+
     const result = await syncLevelRoles(member, levelData.level, config.roles);
 
     if (!result) {

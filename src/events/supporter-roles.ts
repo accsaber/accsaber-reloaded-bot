@@ -11,6 +11,7 @@ const isDmBlocked = (err: unknown): boolean =>
   err instanceof DiscordAPIError && DM_BLOCKED_CODES.has(Number(err.code));
 import { claimSupporterByRole } from "../api/supporters.js";
 import { config } from "../config.js";
+import { WEBSITE_URL } from "../utils/embeds.js";
 
 export const supporterRoleListener = {
   name: Events.GuildMemberUpdate,
@@ -80,7 +81,7 @@ export const supporterRoleListener = {
             dmSent = true;
             try {
               await newMember.send(
-                "Link your Discord with `/register` first to claim your supporter perks."
+                `Sign in at ${WEBSITE_URL} with Discord to link your account and claim your supporter perks.`
               );
             } catch (dmErr) {
               if (isDmBlocked(dmErr)) {

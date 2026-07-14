@@ -7,7 +7,12 @@ import type { Command } from "../client.js";
 import { ApiError } from "../api/client.js";
 import { assignSupporter } from "../api/supporters.js";
 import { config } from "../config.js";
-import { errorEmbed, successEmbed, warningEmbed } from "../utils/embeds.js";
+import {
+  WEBSITE_URL,
+  errorEmbed,
+  successEmbed,
+  warningEmbed,
+} from "../utils/embeds.js";
 
 const assign: Command = {
   data: new SlashCommandBuilder()
@@ -80,7 +85,7 @@ const assign: Command = {
               embeds: [
                 errorEmbed(
                   "Not Linked",
-                  `<@${user.id}> hasn't linked their Discord to AccSaber. Ask them to run \`/register\` first.`
+                  `<@${user.id}> hasn't linked their Discord to AccSaber. Ask them to sign in at ${WEBSITE_URL} with Discord first.`
                 ),
               ],
             });
