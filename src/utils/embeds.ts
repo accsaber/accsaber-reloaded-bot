@@ -69,7 +69,7 @@ export function infoEmbed(title: string, description: string): EmbedBuilder {
 export function linkPromptEmbed(intro: string): EmbedBuilder {
   return errorEmbed(
     "Account Not Linked",
-    `${intro}\n\nLinking is only done on the website — the bot can't do it for you. Sign in at ${WEBSITE_URL} with your Discord account and you'll be linked automatically.`
+    `${intro}\n\nLinking is only done on the website. Sign in at ${WEBSITE_URL} with your Discord account and you'll be linked automatically.`
   );
 }
 

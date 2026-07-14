@@ -57,7 +57,7 @@ export const supporterRoleListener = {
         if (supporters.notifyDmOnClaim) {
           try {
             await newMember.send(
-              `Thanks for supporting AccSaber! Your **${tier}** tier is active — visit your profile to equip your new items.`
+              `Thanks for supporting AccSaber! Your **${tier}** tier is active. Visit your profile to equip your new items.`
             );
           } catch (err) {
             if (isDmBlocked(err)) {

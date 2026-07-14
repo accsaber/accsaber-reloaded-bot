@@ -38,7 +38,7 @@ export async function reconcileSupporterRoles(
 
   const supporters = config.supporters;
   if (!supporters?.enabled) {
-    console.warn("[Reconcile] Supporters not enabled — skipping");
+    console.warn("[Reconcile] Supporters not enabled, skipping");
     return summary;
   }
 
@@ -55,7 +55,7 @@ export async function reconcileSupporterRoles(
     const expectedTierCode = tierCodeFromName(tierName);
     if (!expectedTierCode) {
       console.warn(
-        `[Reconcile] Unknown tier name ${tierName} for role ${roleId} — skipping`
+        `[Reconcile] Unknown tier name ${tierName} for role ${roleId}, skipping`
       );
       continue;
     }
@@ -72,7 +72,7 @@ export async function reconcileSupporterRoles(
         if (!link) {
           summary.skippedUnlinked++;
           console.info(
-            `[Reconcile] Unlinked Discord ${member.id} has ${tierName} role — leaving alone`
+            `[Reconcile] Unlinked Discord ${member.id} has ${tierName} role, skipping`
           );
           continue;
         }
@@ -91,7 +91,7 @@ export async function reconcileSupporterRoles(
         if (options?.dmOnRevoke) {
           try {
             await member.send(
-              "Your AccSaber supporter tier has lapsed. Your items are yours to keep — thanks for the support."
+              "Your AccSaber supporter tier has lapsed. Your items are yours to keep. Thanks for the support."
             );
           } catch (dmErr) {
             console.warn(
@@ -144,7 +144,7 @@ export function scheduleSupporterReconciliation(client: ArBot): void {
       const summary = await reconcileSupporterRoles(client, {
         dmOnRevoke: true,
       });
-      console.log(`[Reconcile] Daily run complete — ${formatReconcileSummary(summary)}`);
+      console.log(`[Reconcile] Daily run complete: ${formatReconcileSummary(summary)}`);
     } catch (err) {
       console.error("[Reconcile] Daily run failed:", err);
     } finally {
