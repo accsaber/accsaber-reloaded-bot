@@ -304,7 +304,7 @@ export async function renderMilestoneCard(
 
   return {
     image: canvas.toBuffer("image/png"),
-    profileUrl: `https://accsaberreloaded.com/players/${user.id}`,
+    profileUrl: `https://accsaber.com/players/${user.id}`,
   };
 }
 
@@ -500,7 +500,7 @@ export async function renderMilestoneSetCard(
 
   return {
     image: canvas.toBuffer("image/png"),
-    profileUrl: `https://accsaberreloaded.com/players/${user.id}`,
+    profileUrl: `https://accsaber.com/players/${user.id}`,
   };
 }
 

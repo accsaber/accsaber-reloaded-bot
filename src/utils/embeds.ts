@@ -1,6 +1,6 @@
 import { EmbedBuilder } from "discord.js";
 
-export const WEBSITE_URL = "https://accsaberreloaded.com";
+export const WEBSITE_URL = "https://accsaber.com";
 
 export const Colors = {
   category: {

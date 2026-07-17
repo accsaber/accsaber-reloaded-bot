@@ -276,7 +276,7 @@ export async function renderMissionCard(
 
   return {
     image: canvas.toBuffer("image/png"),
-    profileUrl: `https://accsaberreloaded.com/players/${user.id}`,
+    profileUrl: `https://accsaber.com/players/${user.id}`,
   };
 }
 

@@ -282,8 +282,8 @@ export async function renderFeedCard(data: FeedCardData): Promise<FeedCardResult
 
   return {
     image: canvas.toBuffer("image/png"),
-    profileUrl: `https://accsaberreloaded.com/players/${score.userId}`,
-    mapUrl: `https://accsaberreloaded.com/maps/${score.mapId}?difficultyId=${score.mapDifficultyId}`,
+    profileUrl: `https://accsaber.com/players/${score.userId}`,
+    mapUrl: `https://accsaber.com/maps/${score.mapId}?difficultyId=${score.mapDifficultyId}`,
     replayUrl: score.blScoreId
       ? `https://replay.beatleader.com/?scoreId=${score.blScoreId}`
       : null,

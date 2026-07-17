@@ -55,7 +55,7 @@ npm run dev
 | `/update` | Sync your Discord roles based on your current AccSaber level |
 
 Accounts are linked on the website, not through the bot: signing in at
-https://accsaberreloaded.com with Discord creates the link the bot reads.
+https://accsaber.com with Discord creates the link the bot reads.
 
 ## Scripts
 

@@ -6,7 +6,7 @@
     "1482754208452055290"
   ],
   "api": {
-    "baseUrl": "https://api.accsaberreloaded.com/v1",
+    "baseUrl": "https://api.accsaber.com/v1",
     "cacheTtlMs": 3600000
   },
   "roles": {
