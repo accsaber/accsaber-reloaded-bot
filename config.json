@@ -224,6 +224,11 @@
         "emoji": "⛺",
         "roleId": "1508576455309660251",
         "label": "Campaign Updates"
+      },
+      "eventPings": {
+        "emoji": "🎉",
+        "roleId": "1527604733383016538",
+        "label": "Event Pings"
       }
     }
   },
