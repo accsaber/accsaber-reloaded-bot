@@ -202,8 +202,8 @@
     "channelId": "1528699902668832930",
     "wsUrl": null,
     "rarities": ["legendary", "mythic"],
-    "alwaysPostUnusual": true,
-    "alwaysPostSerialBelow": 10,
+    "postOnModifier": true,
+    "ignoredModifiers": ["normal", "founders"],
     "messageTemplate": "Just unboxed {article} {rarity} {itemType} from {crateName}!",
     "unusualSubtitleTemplate": "Rolled an Unusual: {effectName}",
     "maxOpenAgeSeconds": 600

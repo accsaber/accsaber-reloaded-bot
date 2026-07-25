@@ -1,5 +1,9 @@
 import { mkdirSync, writeFileSync } from "node:fs";
-import { buildCrateCardData, isNoteworthyOpen } from "./services/crate-rules.js";
+import {
+  buildCrateCardData,
+  isNoteworthyOpen,
+  triggeringModifiers,
+} from "./services/crate-rules.js";
 import type {
   CrateFeedFrame,
   ItemModifierRef,
@@ -13,8 +17,8 @@ const CFG: CrateFeedConfig = {
   enabled: true,
   channelId: "0",
   rarities: ["legendary", "mythic"],
-  alwaysPostUnusual: true,
-  alwaysPostSerialBelow: 10,
+  postOnModifier: true,
+  ignoredModifiers: ["normal", "founders"],
   messageTemplate: "Just unboxed {article} {rarity} {itemType} from {crateName}!",
   unusualSubtitleTemplate: "Rolled an Unusual: {effectName}",
 };
@@ -142,7 +146,7 @@ interface Scenario {
 
 const SCENARIOS: Scenario[] = [
   {
-    name: "mythic-unusual-serialized",
+    name: "legendary-saber-unusual",
     reward: "ACC God Saber",
     modifiers: [MODIFIERS.unusual],
     unusualEffect: FIERY,
@@ -223,6 +227,19 @@ const SCENARIOS: Scenario[] = [
     level: 63,
   },
   {
+    name: "common-founders-only-filtered",
+    reward: "Alive",
+    modifiers: [MODIFIERS.founders],
+    serialNumber: 4,
+    level: 12,
+  },
+  {
+    name: "common-strange-passes",
+    reward: "Alive",
+    modifiers: [MODIFIERS.strange],
+    level: 12,
+  },
+  {
     name: "legendary-minimal-perk",
     reward: item({
       typeKey: "perk",
@@ -298,8 +315,17 @@ async function main() {
     const frame = JSON.parse(toWireFrame(scenario, catalog)) as CrateFeedFrame;
     const posts = isNoteworthyOpen(frame, CFG);
     const data = buildCrateCardData(frame, CFG, scenario.level);
+    const rarity = frame.open.reward.item.rarity;
+    const triggers = triggeringModifiers(frame, CFG);
+    const reason = CFG.rarities.includes(rarity)
+      ? `rarity=${rarity}`
+      : triggers.length > 0
+        ? `modifiers=${triggers.join("+")}`
+        : "none";
 
-    console.log(`Rendering ${scenario.name} (feed would post: ${posts ? "yes" : "no"})`);
+    console.log(
+      `Rendering ${scenario.name} (posts: ${posts ? "yes" : "no"}, trigger: ${reason})`
+    );
     const result = await renderCrateCard(data);
     const path = `test-output/crate-${scenario.name}.png`;
     writeFileSync(path, result.image);

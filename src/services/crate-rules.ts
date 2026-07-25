@@ -7,22 +7,30 @@ import {
 } from "../utils/crate-card-renderer.js";
 import { renderTemplate } from "../utils/templates.js";
 
+export const DEFAULT_IGNORED_MODIFIERS = ["normal", "founders"];
+
+export function triggeringModifiers(
+  frame: CrateFeedFrame,
+  cfg: Pick<CrateFeedConfig, "ignoredModifiers">
+): string[] {
+  const ignored = new Set(
+    (cfg.ignoredModifiers ?? DEFAULT_IGNORED_MODIFIERS).map((k) => k.toLowerCase())
+  );
+  return frame.open.reward.modifiers
+    .map((m) => m.key)
+    .filter((key) => !ignored.has(key.toLowerCase()));
+}
+
 export function isNoteworthyOpen(
   frame: CrateFeedFrame,
   cfg: CrateFeedConfig
 ): boolean {
-  const reward = frame.open.reward;
+  const rarity = frame.open.reward.item.rarity.toLowerCase();
   const allowed = new Set(cfg.rarities.map((r) => r.toLowerCase()));
+  if (allowed.has(rarity)) return true;
 
-  if (allowed.has(reward.item.rarity.toLowerCase())) return true;
-  if (cfg.alwaysPostUnusual && reward.unusualEffect) return true;
-
-  const serialCutoff = cfg.alwaysPostSerialBelow;
-  return (
-    serialCutoff !== undefined &&
-    reward.serialNumber != null &&
-    reward.serialNumber <= serialCutoff
-  );
+  if (cfg.postOnModifier === false) return false;
+  return triggeringModifiers(frame, cfg).length > 0;
 }
 
 export function crateTemplateVars(

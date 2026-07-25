@@ -137,8 +137,8 @@ export interface CrateFeedConfig {
   channelId: string;
   wsUrl?: string | null;
   rarities: string[];
-  alwaysPostUnusual?: boolean;
-  alwaysPostSerialBelow?: number;
+  postOnModifier?: boolean;
+  ignoredModifiers?: string[];
   messageTemplate: string;
   unusualSubtitleTemplate?: string;
   maxOpenAgeSeconds?: number;
