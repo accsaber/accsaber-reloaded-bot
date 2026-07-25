@@ -348,6 +348,88 @@ export function drawTargetIcon(
   ctx.restore();
 }
 
+export function drawCrateIcon(
+  ctx: Ctx,
+  x: number,
+  y: number,
+  size: number,
+  color: string,
+  glow: { color: string; blur: number } | null = null
+): void {
+  ctx.save();
+  ctx.translate(x, y);
+  if (glow) {
+    ctx.shadowColor = glow.color;
+    ctx.shadowBlur = glow.blur;
+  }
+  const s = size / 24;
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = 1.9 * s;
+
+  ctx.beginPath();
+  ctx.roundRect(3.5 * s, 8 * s, 17 * s, 13 * s, 2 * s);
+  ctx.closePath();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.roundRect(2 * s, 4 * s, 20 * s, 5 * s, 1.6 * s);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.globalAlpha = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(12 * s, 9.5 * s);
+  ctx.lineTo(12 * s, 21 * s);
+  ctx.stroke();
+  ctx.globalAlpha = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(4.5 * s, 15 * s);
+  ctx.lineTo(19.5 * s, 15 * s);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+}
+
+export function drawSparkleIcon(
+  ctx: Ctx,
+  x: number,
+  y: number,
+  size: number,
+  color: string,
+  glow: { color: string; blur: number } | null = null
+): void {
+  ctx.save();
+  ctx.translate(x, y);
+  if (glow) {
+    ctx.shadowColor = glow.color;
+    ctx.shadowBlur = glow.blur;
+  }
+  const s = size / 24;
+  ctx.fillStyle = color;
+
+  const star = (cx: number, cy: number, r: number, waist: number) => {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r);
+    ctx.quadraticCurveTo(cx + waist, cy - waist, cx + r, cy);
+    ctx.quadraticCurveTo(cx + waist, cy + waist, cx, cy + r);
+    ctx.quadraticCurveTo(cx - waist, cy + waist, cx - r, cy);
+    ctx.quadraticCurveTo(cx - waist, cy - waist, cx, cy - r);
+    ctx.closePath();
+    ctx.fill();
+  };
+
+  star(11 * s, 11 * s, 9 * s, 1.6 * s);
+  ctx.globalAlpha = 0.75;
+  star(19 * s, 18.5 * s, 4.5 * s, 0.8 * s);
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+}
+
 export function formatDifficulty(diff: string): string {
   const map: Record<string, string> = {
     EASY: "Easy",

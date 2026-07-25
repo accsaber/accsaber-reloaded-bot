@@ -2,6 +2,8 @@ import { Events } from "discord.js";
 import { getCategories } from "../api/categories.js";
 import type { ArBot } from "../client.js";
 import { config } from "../config.js";
+import { CrateFeed } from "../services/crate-feed.js";
+import { CrateWebSocket } from "../services/crate-ws.js";
 import { MilestoneFeed } from "../services/milestone-feed.js";
 import { MilestoneWebSocket } from "../services/milestone-ws.js";
 import { MissionFeed } from "../services/mission-feed.js";
@@ -70,6 +72,19 @@ export default {
       ws.connect();
       client.missionWs = ws;
       console.log("[MissionFeed] Mission feed started");
+    }
+
+    if (config.crateFeed?.enabled) {
+      const feed = new CrateFeed(client);
+      const ws = new CrateWebSocket();
+      ws.onCrateOpened((frame) => {
+        feed.handleFrame(frame).catch((err) => {
+          console.error("[CrateFeed] Error handling frame:", err);
+        });
+      });
+      ws.connect();
+      client.crateWs = ws;
+      console.log("[CrateFeed] Crate feed started");
     }
   },
 };

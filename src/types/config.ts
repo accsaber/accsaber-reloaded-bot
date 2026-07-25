@@ -132,6 +132,18 @@ export interface MissionFeedConfig {
   maxCompletedAgeSeconds?: number;
 }
 
+export interface CrateFeedConfig {
+  enabled: boolean;
+  channelId: string;
+  wsUrl?: string | null;
+  rarities: string[];
+  alwaysPostUnusual?: boolean;
+  alwaysPostSerialBelow?: number;
+  messageTemplate: string;
+  unusualSubtitleTemplate?: string;
+  maxOpenAgeSeconds?: number;
+}
+
 export interface LevelTierRoles {
   newcomer: string;
   apprentice: string;
@@ -181,5 +193,6 @@ export interface Config {
   scoreFeed?: ScoreFeedConfig;
   milestoneFeed?: MilestoneFeedConfig;
   missionFeed?: MissionFeedConfig;
+  crateFeed?: CrateFeedConfig;
   supporters?: SupportersConfig;
 }

@@ -33,6 +33,13 @@ function loadConfig(): Config {
     if (!mf.messageTemplate) required.push("missionFeed.messageTemplate");
   }
 
+  if (parsed.crateFeed?.enabled) {
+    const cf = parsed.crateFeed;
+    if (!cf.channelId) required.push("crateFeed.channelId");
+    if (!cf.rarities || cf.rarities.length === 0) required.push("crateFeed.rarities");
+    if (!cf.messageTemplate) required.push("crateFeed.messageTemplate");
+  }
+
   if (required.length > 0) {
     throw new Error(`Missing required config fields: ${required.join(", ")}`);
   }

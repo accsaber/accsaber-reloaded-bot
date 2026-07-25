@@ -197,6 +197,17 @@
     "messageTemplate": "Just conquered an EXTREME {pool} mission!",
     "maxCompletedAgeSeconds": 600
   },
+  "crateFeed": {
+    "enabled": true,
+    "channelId": "1528699902668832930",
+    "wsUrl": null,
+    "rarities": ["legendary", "mythic"],
+    "alwaysPostUnusual": true,
+    "alwaysPostSerialBelow": 10,
+    "messageTemplate": "Just unboxed {article} {rarity} {itemType} from {crateName}!",
+    "unusualSubtitleTemplate": "Rolled an Unusual: {effectName}",
+    "maxOpenAgeSeconds": 600
+  },
   "reactionRoles": {
     "channelId": "1484645896997175507",
     "roles": {

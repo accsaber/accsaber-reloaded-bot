@@ -246,3 +246,89 @@ export interface MissionCompletedPayload {
   xpAwarded?: number;
   itemAwardedId?: string;
 }
+
+export type ItemRarity =
+  | "common"
+  | "uncommon"
+  | "rare"
+  | "epic"
+  | "legendary"
+  | "mythic";
+
+export interface ItemResponse {
+  id: string;
+  typeId: string;
+  typeKey: string;
+  name: string;
+  description: string | null;
+  iconUrl: string | null;
+  value: Record<string, unknown> | null;
+  rarity: ItemRarity;
+  worth: number | null;
+  requirement: string | null;
+  unlockLevel: number | null;
+  createdAt: string;
+  tradeable: boolean;
+  visible: boolean;
+  active: boolean;
+  deprecated: boolean;
+  stackable: boolean;
+  welcomeGrant: boolean;
+  missionPoolable: boolean;
+  downloadable: boolean;
+  uniquePerUser: boolean;
+  serialized: boolean;
+}
+
+export interface ItemModifierRef {
+  id: string;
+  key: string;
+  name: string;
+  colorHex: string | null;
+  effectSpec: Record<string, unknown> | null;
+}
+
+export interface UnusualEffectRef {
+  id: string;
+  key: string;
+  name: string;
+  effectSpec: Record<string, unknown> | null;
+}
+
+export interface UserItemResponse {
+  linkId: string;
+  item: ItemResponse;
+  modifiers: ItemModifierRef[];
+  unusualEffect: UnusualEffectRef | null;
+  serialNumber: number | null;
+  quantity: number;
+  counters: Record<string, number> | null;
+  source: string;
+  sourceId: string;
+  awardedByStaffId: string | null;
+  reason: string | null;
+  awardedAt: string;
+  variantKey: string | null;
+}
+
+export interface CrateOpenResponse {
+  id: string;
+  crate: ItemResponse;
+  consumedLinkId: string;
+  reward: UserItemResponse;
+  rolledAt: string;
+}
+
+export interface CrateFeedUserRef {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  cdnAvatarUrl: string | null;
+  country: string | null;
+}
+
+export interface CrateFeedFrame {
+  type: string;
+  player: CrateFeedUserRef;
+  open: CrateOpenResponse;
+}
