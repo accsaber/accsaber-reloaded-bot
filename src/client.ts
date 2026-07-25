@@ -8,6 +8,7 @@ import {
   type SlashCommandOptionsOnlyBuilder,
   type SlashCommandSubcommandsOnlyBuilder,
 } from "discord.js";
+import type { CampaignWebSocket } from "./services/campaign-ws.js";
 import type { CrateWebSocket } from "./services/crate-ws.js";
 import type { MilestoneWebSocket } from "./services/milestone-ws.js";
 import type { MissionWebSocket } from "./services/mission-ws.js";
@@ -27,6 +28,7 @@ export class ArBot extends Client {
   milestoneWs?: MilestoneWebSocket;
   missionWs?: MissionWebSocket;
   crateWs?: CrateWebSocket;
+  campaignWs?: CampaignWebSocket;
 
   constructor() {
     super({

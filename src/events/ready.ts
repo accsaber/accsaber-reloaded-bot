@@ -2,6 +2,8 @@ import { Events } from "discord.js";
 import { getCategories } from "../api/categories.js";
 import type { ArBot } from "../client.js";
 import { config } from "../config.js";
+import { CampaignFeed } from "../services/campaign-feed.js";
+import { CampaignWebSocket } from "../services/campaign-ws.js";
 import { CrateFeed } from "../services/crate-feed.js";
 import { CrateWebSocket } from "../services/crate-ws.js";
 import { MilestoneFeed } from "../services/milestone-feed.js";
@@ -85,6 +87,19 @@ export default {
       ws.connect();
       client.crateWs = ws;
       console.log("[CrateFeed] Crate feed started");
+    }
+
+    if (config.campaignFeed?.enabled) {
+      const feed = new CampaignFeed(client);
+      const ws = new CampaignWebSocket();
+      ws.onCampaignProgress((frame) => {
+        feed.handleFrame(frame).catch((err) => {
+          console.error("[CampaignFeed] Error handling frame:", err);
+        });
+      });
+      ws.connect();
+      client.campaignWs = ws;
+      console.log("[CampaignFeed] Campaign feed started");
     }
   },
 };

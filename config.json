@@ -208,6 +208,32 @@
     "unusualSubtitleTemplate": "Rolled an Unusual: {effectName}",
     "maxOpenAgeSeconds": 600
   },
+  "campaignFeed": {
+    "enabled": false,
+    "channelId": "1528699826114527303",
+    "wsUrl": null,
+    "maxCompletedAgeSeconds": 600,
+    "rules": {
+      "sealMilestone": {
+        "enabled": true,
+        "campaignSlug": "acc-champ-community-campaign",
+        "labels": ["Mercenary", "Acc Champ", "Elder", "God", "Celestial"],
+        "messageTemplate": "Earned a seal in {campaignName}",
+        "color": "#f59e0b"
+      },
+      "milestone": {
+        "enabled": true,
+        "ignoredLabels": ["start"],
+        "messageTemplate": "Hit a checkpoint in {campaignName}",
+        "color": "#a855f7"
+      },
+      "completion": {
+        "enabled": true,
+        "messageTemplate": "Finished a campaign by {creatorName}",
+        "color": "#22c55e"
+      }
+    }
+  },
   "reactionRoles": {
     "channelId": "1484645896997175507",
     "roles": {

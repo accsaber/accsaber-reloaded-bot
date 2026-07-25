@@ -40,6 +40,18 @@ function loadConfig(): Config {
     if (!cf.messageTemplate) required.push("crateFeed.messageTemplate");
   }
 
+  if (parsed.campaignFeed?.enabled) {
+    const cf = parsed.campaignFeed;
+    if (!cf.channelId) required.push("campaignFeed.channelId");
+    if (!cf.rules) required.push("campaignFeed.rules");
+    if (!cf.rules?.sealMilestone) required.push("campaignFeed.rules.sealMilestone");
+    if (cf.rules?.sealMilestone?.enabled && !cf.rules.sealMilestone.campaignSlug) {
+      required.push("campaignFeed.rules.sealMilestone.campaignSlug");
+    }
+    if (!cf.rules?.milestone) required.push("campaignFeed.rules.milestone");
+    if (!cf.rules?.completion) required.push("campaignFeed.rules.completion");
+  }
+
   if (required.length > 0) {
     throw new Error(`Missing required config fields: ${required.join(", ")}`);
   }

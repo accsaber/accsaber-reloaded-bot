@@ -240,6 +240,43 @@ const SCENARIOS: Scenario[] = [
     level: 12,
   },
   {
+    name: "rare-pedestal-modifier",
+    reward: "ACC Champ Pedestal",
+    modifiers: [MODIFIERS.strange],
+    level: 34,
+  },
+  {
+    name: "common-crate-as-reward",
+    reward: "Alpha Crate",
+    modifiers: [MODIFIERS.vintage],
+    quantity: 2,
+    level: 19,
+  },
+  {
+    name: "common-statistic-holographic",
+    reward: item({
+      typeKey: "statistic",
+      name: "Combo King Showcase",
+      description: "Showcase your highest combo on your profile.",
+      rarity: "common",
+      worth: 4,
+    }),
+    modifiers: [MODIFIERS.holographic],
+    level: 27,
+  },
+  {
+    name: "legendary-unknown-type",
+    reward: item({
+      typeKey: "hologram_frame",
+      name: "Prism Hologram",
+      description: "An item type the bot has never seen before.",
+      rarity: "legendary",
+      worth: 300,
+    }),
+    modifiers: [],
+    level: 51,
+  },
+  {
     name: "legendary-minimal-perk",
     reward: item({
       typeKey: "perk",

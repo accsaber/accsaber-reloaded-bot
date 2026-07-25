@@ -332,3 +332,166 @@ export interface CrateFeedFrame {
   player: CrateFeedUserRef;
   open: CrateOpenResponse;
 }
+
+export type CampaignStatus = "DRAFT" | "PUBLISHED" | "EDITING" | "CURATED";
+export type CampaignCompletionMode = "TERMINAL" | "ALL";
+export type CampaignProgressStatus = "IN_PROGRESS" | "COMPLETED" | "ABANDONED";
+export type CampaignTagKind = "CATEGORY" | "DIFFICULTY" | "THEME" | "GENRE";
+export type CampaignRequirementType =
+  | "ACC"
+  | "AP"
+  | "SCORE"
+  | "STREAK_115"
+  | "FC"
+  | "RANK"
+  | "PASS";
+
+export interface CampaignTagResponse {
+  id: string;
+  kind: CampaignTagKind;
+  name: string;
+  categoryId?: string;
+  system: boolean;
+}
+
+export interface CampaignItemGrant {
+  itemId: string;
+  itemName: string;
+  quantity: number;
+}
+
+export interface CampaignResponse {
+  id: string;
+  creatorId: string;
+  creatorName: string;
+  creatorAlias?: string;
+  name: string;
+  slug: string;
+  summary?: string;
+  description?: string;
+  status: CampaignStatus;
+  seekingCuration: boolean;
+  official: boolean;
+  progressionAgnostic: boolean;
+  legacy: boolean;
+  playlistExportEnabled: boolean;
+  completionMode: CampaignCompletionMode;
+  completionXp: number;
+  backgroundUrl?: string;
+  backgroundColor?: string;
+  iconUrl?: string;
+  difficultyCount: number;
+  totalUpvotes: number;
+  totalDownvotes: number;
+  voteScore: number;
+  tags: CampaignTagResponse[];
+  completionItems: CampaignItemGrant[];
+  submittedAt?: string;
+  curatedAt?: string;
+  publishedAt?: string;
+  createdAt: string;
+}
+
+export interface CampaignNodeMetadata {
+  bpm: number;
+  notes: number;
+  bombs: number;
+  walls: number;
+  duration: number;
+}
+
+export interface CampaignDifficultyResponse {
+  id: string;
+  mapDifficultyId: string;
+  mapId: string;
+  categoryId?: string;
+  complexity?: number;
+  nps?: number;
+  beatsaverCode?: string;
+  maxScore?: number;
+  maxCombo?: number;
+  metadata?: CampaignNodeMetadata;
+  songName: string;
+  songAuthor: string;
+  mapAuthor: string;
+  coverUrl?: string;
+  cdnCoverUrl?: string;
+  difficulty: "EASY" | "NORMAL" | "HARD" | "EXPERT" | "EXPERT_PLUS";
+  characteristic: string;
+  mapDifficultyStatus: "QUEUE" | "QUALIFIED" | "RANKED" | "CAMPAIGN";
+  requirementType: CampaignRequirementType;
+  requirementValue?: number;
+  prerequisiteMode: "AND" | "OR";
+  description?: string;
+  checkpointLabel?: string;
+  checkpointAvatarUrl?: string;
+  checkpointColor?: string;
+  borderColor?: string;
+  borderShape?: string;
+  checkpointLabelPosition?: "LEFT" | "RIGHT" | "UP" | "DOWN" | "NONE";
+  size?: number;
+  checkpointSize?: number;
+  positionX?: number;
+  positionY?: number;
+  xp: number;
+  prerequisites: { comesFromCampaignDifficultyId: string; color?: string }[];
+  items: CampaignItemGrant[];
+}
+
+export interface CampaignFeedUserRef {
+  userId: string;
+  userName: string;
+  country?: string;
+  avatarUrl?: string;
+  cdnAvatarUrl?: string;
+}
+
+export interface CampaignFeedFrame {
+  type: string;
+  player?: CampaignFeedUserRef;
+  campaign: CampaignResponse;
+  node?: CampaignDifficultyResponse;
+  completedAt: string;
+}
+
+export interface CampaignDifficultyProgressResponse {
+  node: CampaignDifficultyResponse;
+  userValue?: number | null;
+  userScore?: number | null;
+  completed: boolean;
+  unlocked: boolean;
+  pathCompleted: boolean;
+  rewardsEarned: boolean;
+}
+
+export interface CampaignBarrierProgressResponse {
+  barrier: {
+    id: string;
+    conditionType: string;
+    conditionValue?: number;
+    label?: string;
+    xp?: number;
+    items: CampaignItemGrant[];
+  };
+  currentValue?: number | null;
+  satisfied: boolean;
+  unlocked: boolean;
+}
+
+export interface CampaignCurrentMilestone {
+  nodeId: string;
+  label: string;
+  depth: number;
+}
+
+export interface CampaignProgressResponse {
+  id: string | null;
+  campaign: CampaignResponse;
+  progressStatus: CampaignProgressStatus | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  completedDifficulties: number;
+  currentMilestone?: CampaignCurrentMilestone | null;
+  difficulties: CampaignDifficultyProgressResponse[];
+  barriers: CampaignBarrierProgressResponse[];
+}

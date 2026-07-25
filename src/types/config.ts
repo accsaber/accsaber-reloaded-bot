@@ -144,6 +144,44 @@ export interface CrateFeedConfig {
   maxOpenAgeSeconds?: number;
 }
 
+export interface CampaignSealMilestoneRuleConfig {
+  enabled: boolean;
+  campaignSlug: string;
+  labels: string[];
+  messageTemplate: string;
+  subtitleTemplate?: string;
+  color: string;
+}
+
+export interface CampaignMilestoneRuleConfig {
+  enabled: boolean;
+  ignoredLabels?: string[];
+  messageTemplate: string;
+  subtitleTemplate?: string;
+  color: string;
+}
+
+export interface CampaignCompletionRuleConfig {
+  enabled: boolean;
+  messageTemplate: string;
+  subtitleTemplate?: string;
+  color: string;
+}
+
+export interface CampaignFeedRulesConfig {
+  sealMilestone: CampaignSealMilestoneRuleConfig;
+  milestone: CampaignMilestoneRuleConfig;
+  completion: CampaignCompletionRuleConfig;
+}
+
+export interface CampaignFeedConfig {
+  enabled: boolean;
+  channelId: string;
+  wsUrl?: string | null;
+  rules: CampaignFeedRulesConfig;
+  maxCompletedAgeSeconds?: number;
+}
+
 export interface LevelTierRoles {
   newcomer: string;
   apprentice: string;
@@ -194,5 +232,6 @@ export interface Config {
   milestoneFeed?: MilestoneFeedConfig;
   missionFeed?: MissionFeedConfig;
   crateFeed?: CrateFeedConfig;
+  campaignFeed?: CampaignFeedConfig;
   supporters?: SupportersConfig;
 }
