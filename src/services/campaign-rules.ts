@@ -8,10 +8,12 @@ import type { CampaignFeedConfig } from "../types/config.js";
 import { CATEGORY_HEX } from "../utils/canvas-utils.js";
 import {
   formatElapsed,
-  formatRequirement,
+  formatMeasure,
+  formatObjectives,
   normalizeMilestoneLabel,
   type CampaignCardData,
   type CampaignCardItem,
+  type CampaignCardObjective,
 } from "../utils/campaign-card-renderer.js";
 import { renderTemplate } from "../utils/templates.js";
 
@@ -193,8 +195,9 @@ export function buildMilestoneCardData(
         coverUrl: node.cdnCoverUrl ?? node.coverUrl ?? null,
         difficulty: node.difficulty,
         characteristic: node.characteristic,
-        requirementType: node.requirementType,
-        requirementValue: node.requirementValue ?? null,
+        modifiers: nodeModifiers(node),
+        objectives: nodeObjectives(node),
+        objectiveMode: node.targetMode ?? "AND",
         complexity: node.complexity ?? null,
         nps: node.nps ?? null,
       },
@@ -271,7 +274,33 @@ function campaignRef(frame: CampaignFeedFrame): CampaignCardData["campaign"] {
     official: campaign.official,
     legacy: campaign.legacy,
     curated: campaign.status === "CURATED",
+    loved: campaign.loved ?? false,
   };
+}
+
+function nodeModifiers(node: CampaignDifficultyResponse): string[] {
+  return (node.modifiers ?? [])
+    .filter((m) => m.requirement === "REQUIRED")
+    .map((m) => (m.modifier.code || m.modifier.name || "").toUpperCase())
+    .filter((code) => code.length > 0);
+}
+
+function nodeObjectives(node: CampaignDifficultyResponse): CampaignCardObjective[] {
+  if (node.targets?.length) {
+    return node.targets.map((t) => ({
+      type: t.requirementType,
+      value: t.requirementValue ?? null,
+      valueMax: t.requirementValueMax ?? null,
+    }));
+  }
+
+  return [
+    {
+      type: node.requirementType,
+      value: node.requirementValue ?? null,
+      valueMax: node.requirementValueMax ?? null,
+    },
+  ];
 }
 
 function progressRef(
@@ -337,14 +366,17 @@ function templateVars(
     songName: milestone.node?.songName ?? "",
     songAuthor: milestone.node?.songAuthor ?? "",
     requirement: milestone.node
-      ? formatRequirement(
-          milestone.node.requirementType,
-          milestone.node.requirementValue
+      ? formatObjectives(
+          nodeObjectives(milestone.node),
+          milestone.node.targetMode ?? "AND"
         )
       : "",
     achieved:
       milestone.node && milestone.userValue != null
-        ? formatRequirement(milestone.node.requirementType, milestone.userValue)
+        ? formatMeasure(
+            nodeObjectives(milestone.node)[0].type,
+            milestone.userValue
+          )
         : "",
     elapsed: elapsed ?? "",
   };

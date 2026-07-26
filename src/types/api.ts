@@ -344,7 +344,11 @@ export type CampaignRequirementType =
   | "STREAK_115"
   | "FC"
   | "RANK"
-  | "PASS";
+  | "PASS"
+  | "COMBO"
+  | "BOMB_HITS";
+export type CampaignTargetMode = "AND" | "OR";
+export type CampaignModifierRequirement = "REQUIRED" | "FORBIDDEN";
 
 export interface CampaignTagResponse {
   id: string;
@@ -372,6 +376,7 @@ export interface CampaignResponse {
   status: CampaignStatus;
   seekingCuration: boolean;
   official: boolean;
+  loved: boolean;
   progressionAgnostic: boolean;
   legacy: boolean;
   playlistExportEnabled: boolean;
@@ -388,6 +393,7 @@ export interface CampaignResponse {
   completionItems: CampaignItemGrant[];
   submittedAt?: string;
   curatedAt?: string;
+  lovedAt?: string;
   publishedAt?: string;
   createdAt: string;
 }
@@ -398,6 +404,25 @@ export interface CampaignNodeMetadata {
   bombs: number;
   walls: number;
   duration: number;
+}
+
+export interface CampaignTargetResponse {
+  id: string;
+  requirementType: CampaignRequirementType;
+  requirementValue?: number | null;
+  requirementValueMax?: number | null;
+}
+
+export interface ModifierResponse {
+  id: string;
+  name: string;
+  code: string;
+  multiplier: number;
+}
+
+export interface CampaignModifierRequirementResponse {
+  modifier: ModifierResponse;
+  requirement: CampaignModifierRequirement;
 }
 
 export interface CampaignDifficultyResponse {
@@ -420,7 +445,10 @@ export interface CampaignDifficultyResponse {
   characteristic: string;
   mapDifficultyStatus: "QUEUE" | "QUALIFIED" | "RANKED" | "CAMPAIGN";
   requirementType: CampaignRequirementType;
-  requirementValue?: number;
+  requirementValue?: number | null;
+  requirementValueMax?: number | null;
+  targetMode?: CampaignTargetMode;
+  targets?: CampaignTargetResponse[];
   prerequisiteMode: "AND" | "OR";
   description?: string;
   checkpointLabel?: string;
@@ -436,6 +464,7 @@ export interface CampaignDifficultyResponse {
   xp: number;
   prerequisites: { comesFromCampaignDifficultyId: string; color?: string }[];
   items: CampaignItemGrant[];
+  modifiers?: CampaignModifierRequirementResponse[];
 }
 
 export interface CampaignFeedUserRef {

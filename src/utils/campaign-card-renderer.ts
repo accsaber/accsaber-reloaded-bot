@@ -1,7 +1,7 @@
 import { createCanvas, loadImage } from "@napi-rs/canvas";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { CampaignRequirementType } from "../types/api.js";
+import type { CampaignRequirementType, CampaignTargetMode } from "../types/api.js";
 import {
   ASSETS_DIR,
   BG_BASE,
@@ -32,6 +32,12 @@ export interface CampaignCardItem {
   quantity: number;
 }
 
+export interface CampaignCardObjective {
+  type: CampaignRequirementType;
+  value?: number | null;
+  valueMax?: number | null;
+}
+
 export interface CampaignCardNode {
   songName: string;
   songAuthor: string;
@@ -39,8 +45,9 @@ export interface CampaignCardNode {
   coverUrl?: string | null;
   difficulty: string;
   characteristic: string;
-  requirementType: CampaignRequirementType;
-  requirementValue?: number | null;
+  modifiers: string[];
+  objectives: CampaignCardObjective[];
+  objectiveMode: CampaignTargetMode;
   complexity?: number | null;
   nps?: number | null;
 }
@@ -74,6 +81,7 @@ export interface CampaignCardData {
     official: boolean;
     legacy: boolean;
     curated: boolean;
+    loved: boolean;
   };
   milestone?: CampaignCardMilestone;
   progress?: {
@@ -101,37 +109,96 @@ const CARD_W = W - CARD_X * 2;
 const PAD = 22;
 const HEADER_H = 70;
 const ART_SIZE = 88;
-const HERO_H = 112;
 const REWARDS_H = 48;
 const PROGRESS_H = 26;
 const FOOTER_H = 24;
+const TEXT_X = PAD + 4 + ART_SIZE + 18;
+const TEXT_MAX_W = CARD_W - TEXT_X - PAD;
+const HERO_TOP = 70;
+const HERO_PAD = 16;
+const CHIP_H = 20;
+const CHIP_GAP = 6;
+const CHIP_ROW_H = 26;
+const STAT_ROW_H = 26;
+const STAT_BASELINE = 15;
+const STAT_LABEL_SIZE = 10;
+const STAT_JOIN_SIZE = 10;
+const STAT_VALUE_SIZE = 14;
+const STAT_LABEL_GAP = 7;
+const STAT_JOIN_GAP = 12;
+const STAT_SPLIT_GAP = 26;
+const LOVED = "#f472b6";
 
 export function normalizeMilestoneLabel(label: string): string {
   return label.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-export function formatRequirement(
+interface RequirementUnit {
+  label: string;
+  digits: number;
+  scale?: number;
+  prefix?: string;
+  suffix?: string;
+  suffixOne?: string;
+  valueless?: boolean;
+}
+
+const REQUIREMENT_UNITS: Record<CampaignRequirementType, RequirementUnit> = {
+  ACC: { label: "ACC", digits: 2, scale: 100, suffix: "%" },
+  AP: { label: "AP", digits: 2, suffix: " AP" },
+  SCORE: { label: "SCORE", digits: 0 },
+  STREAK_115: { label: "115 STREAK", digits: 0, suffix: " × 115" },
+  COMBO: { label: "COMBO", digits: 0, suffix: " COMBO" },
+  BOMB_HITS: { label: "BOMBS", digits: 0, suffix: " BOMBS", suffixOne: " BOMB" },
+  RANK: { label: "RANK", digits: 0, prefix: "#" },
+  FC: { label: "FULL COMBO", digits: 0, valueless: true },
+  PASS: { label: "PASS", digits: 0, valueless: true },
+};
+
+function unitSuffix(unit: RequirementUnit, value: number): string {
+  if (unit.suffixOne && Math.abs(value) === 1) return unit.suffixOne;
+  return unit.suffix ?? "";
+}
+
+export function formatMeasure(
   type: CampaignRequirementType,
   value?: number | null
 ): string {
-  switch (type) {
-    case "ACC":
-      return value == null ? "ACC" : `${numberFmt(value * 100, 2)}%`;
-    case "AP":
-      return value == null ? "AP" : `${numberFmt(value, 2)} AP`;
-    case "SCORE":
-      return value == null ? "SCORE" : numberFmt(value, 0);
-    case "STREAK_115":
-      return value == null ? "115 STREAK" : `${numberFmt(value, 0)} × 115`;
-    case "RANK":
-      return value == null ? "RANK" : `#${numberFmt(value, 0)}`;
-    case "FC":
-      return "FULL COMBO";
-    case "PASS":
-      return "PASS";
-    default:
-      return type;
+  const unit = REQUIREMENT_UNITS[type];
+  if (!unit) return type;
+  if (unit.valueless || value == null) return unit.label;
+  return `${unit.prefix ?? ""}${numberFmt(value * (unit.scale ?? 1), unit.digits)}${unitSuffix(unit, value)}`;
+}
+
+export function formatRequirement(
+  type: CampaignRequirementType,
+  value?: number | null,
+  valueMax?: number | null
+): string {
+  const unit = REQUIREMENT_UNITS[type];
+  if (!unit) return type;
+  if (unit.valueless || (value == null && valueMax == null)) return unit.label;
+
+  const bound = (v: number) =>
+    `${unit.prefix ?? ""}${numberFmt(v * (unit.scale ?? 1), unit.digits)}`;
+  const tail = unitSuffix(unit, valueMax ?? value!);
+
+  if (value != null && valueMax != null) {
+    return `${bound(value)}–${bound(valueMax)}${tail}`;
   }
+  if (type === "RANK") return `${bound(value ?? valueMax!)}${tail}`;
+  if (type === "BOMB_HITS" && valueMax === 0) return "NO BOMBS";
+  if (value != null) return `≥ ${bound(value)}${tail}`;
+  return `≤ ${bound(valueMax!)}${tail}`;
+}
+
+export function formatObjectives(
+  objectives: CampaignCardObjective[],
+  mode: CampaignTargetMode
+): string {
+  return objectives
+    .map((o) => formatRequirement(o.type, o.value, o.valueMax))
+    .join(mode === "OR" ? " or " : " and ");
 }
 
 export function formatElapsed(from?: string | null, to?: string | null): string | null {
@@ -173,11 +240,20 @@ export async function renderCampaignCard(
   const completed = data.progress?.completed ?? 0;
   const hasProgress = total > 0;
 
+  const measureCtx = createCanvas(1, 1).getContext("2d");
+  const chipRows = layoutChips(measureCtx, tagSpecs(data), TEXT_MAX_W);
+  const statRows = layoutStats(measureCtx, statGroups(data), TEXT_MAX_W);
+  const heroH =
+    HERO_TOP +
+    chipRows.length * CHIP_ROW_H +
+    statRows.length * STAT_ROW_H +
+    HERO_PAD;
+
   const CARD_H =
     PAD -
     2 +
     HEADER_H +
-    HERO_H +
+    heroH +
     (hasRewards ? REWARDS_H : 0) +
     (hasProgress ? PROGRESS_H : 0) +
     FOOTER_H;
@@ -264,6 +340,9 @@ export async function renderCampaignCard(
   if (statusLabel) {
     topRightX = drawRightChip(ctx, topRightX, curY + 4, statusLabel, accent) - 6;
   }
+  if (campaign.loved) {
+    topRightX = drawRightChip(ctx, topRightX, curY + 4, "LOVED", LOVED) - 6;
+  }
   if (data.category) {
     topRightX =
       drawRightChip(
@@ -336,8 +415,8 @@ export async function renderCampaignCard(
 
   drawHero(ctx, leftX, curY, ART_SIZE, ART_SIZE + 8, accent, hero, isMilestone);
 
-  const textX = leftX + ART_SIZE + 18;
-  const textMaxW = rightEdge - textX;
+  const textX = CARD_X + TEXT_X;
+  const textMaxW = TEXT_MAX_W;
 
   ctx.font = `700 10px ${MONO}`;
   ctx.fillStyle = accent;
@@ -363,64 +442,26 @@ export async function renderCampaignCard(
       authorX,
       curY + 49
     );
-
-    let chipX = textX;
-    chipX = drawChip(
-      ctx,
-      chipX,
-      curY + 70,
-      formatDifficulty(node.difficulty).toUpperCase(),
-      accent
-    );
-    chipX = drawChip(
-      ctx,
-      chipX,
-      curY + 70,
-      `NEEDED ${formatRequirement(node.requirementType, node.requirementValue)}`,
-      TEXT_SECONDARY
-    );
-    if (milestone?.userValue != null) {
-      drawChip(
-        ctx,
-        chipX,
-        curY + 70,
-        `GOT ${formatRequirement(node.requirementType, milestone.userValue)}`,
-        accent
-      );
-    }
-  } else if (!isMilestone) {
-    if (campaign.summary) {
-      ctx.font = `400 12px ${SANS}`;
-      ctx.fillStyle = TEXT_SECONDARY;
-      const lines = wrapText(ctx, campaign.summary, textMaxW, 2);
-      let y = curY + 46;
-      for (const line of lines) {
-        ctx.fillText(line, textX, y);
-        y += 16;
-      }
-    }
-
-    const elapsed = formatElapsed(
-      data.progress?.startedAt,
-      data.progress?.completedAt
-    );
-    let chipX = textX;
-    chipX = drawChip(
-      ctx,
-      chipX,
-      curY + 70,
-      `${campaign.difficultyCount} MAPS`,
-      accent
-    );
-    if (elapsed) {
-      chipX = drawChip(ctx, chipX, curY + 70, elapsed.toUpperCase(), TEXT_SECONDARY);
-    }
-    if (campaign.legacy) {
-      drawChip(ctx, chipX, curY + 70, "LEGACY", TEXT_SECONDARY);
+  } else if (!isMilestone && campaign.summary) {
+    ctx.font = `400 12px ${SANS}`;
+    ctx.fillStyle = TEXT_SECONDARY;
+    const lines = wrapText(ctx, campaign.summary, textMaxW, 2);
+    let y = curY + 46;
+    for (const line of lines) {
+      ctx.fillText(line, textX, y);
+      y += 16;
     }
   }
 
-  curY += HERO_H;
+  drawChipRows(ctx, textX, curY + HERO_TOP, chipRows);
+  drawStatRows(
+    ctx,
+    textX,
+    curY + HERO_TOP + chipRows.length * CHIP_ROW_H,
+    statRows
+  );
+
+  curY += heroH;
 
   if (hasRewards) {
     ctx.font = `700 10px ${MONO}`;
@@ -594,6 +635,175 @@ function drawGiftDot(ctx: Ctx, cx: number, cy: number, color: string): void {
   ctx.restore();
 }
 
+interface ChipSpec {
+  label: string;
+  color: string;
+}
+
+function tagSpecs(data: CampaignCardData): ChipSpec[] {
+  const accent = data.accentColor;
+
+  if (data.kind === "milestone") {
+    const node = data.milestone?.node;
+    if (!node) return [];
+    return [
+      { label: formatDifficulty(node.difficulty).toUpperCase(), color: accent },
+      ...node.modifiers.map((code) => ({ label: code, color: accent })),
+    ];
+  }
+
+  const specs: ChipSpec[] = [
+    { label: `${data.campaign.difficultyCount} MAPS`, color: accent },
+  ];
+  const elapsed = formatElapsed(data.progress?.startedAt, data.progress?.completedAt);
+  if (elapsed) specs.push({ label: elapsed.toUpperCase(), color: TEXT_SECONDARY });
+  if (data.campaign.legacy) specs.push({ label: "LEGACY", color: TEXT_SECONDARY });
+  return specs;
+}
+
+function chipWidth(ctx: Ctx, spec: ChipSpec): number {
+  ctx.font = `700 10px ${MONO}`;
+  return ctx.measureText(spec.label).width + 18;
+}
+
+function layoutChips(ctx: Ctx, specs: ChipSpec[], maxW: number): ChipSpec[][] {
+  const rows: ChipSpec[][] = [];
+  let row: ChipSpec[] = [];
+  let width = 0;
+
+  for (const spec of specs) {
+    const own = chipWidth(ctx, spec);
+    if (row.length > 0 && width + CHIP_GAP + own > maxW) {
+      rows.push(row);
+      row = [spec];
+      width = own;
+      continue;
+    }
+    row.push(spec);
+    width += (row.length > 1 ? CHIP_GAP : 0) + own;
+  }
+
+  if (row.length > 0) rows.push(row);
+  return rows;
+}
+
+function drawChipRows(ctx: Ctx, x: number, y: number, rows: ChipSpec[][]): void {
+  let rowY = y;
+  for (const row of rows) {
+    let chipX = x;
+    for (const spec of row) {
+      chipX += drawChip(ctx, chipX, rowY, spec.label, spec.color) + CHIP_GAP;
+    }
+    rowY += CHIP_ROW_H;
+  }
+}
+
+interface StatSegment {
+  text: string;
+  size: number;
+  color: string;
+  gapBefore: number;
+}
+
+type StatGroup = StatSegment[];
+
+function statGroups(data: CampaignCardData): StatGroup[] {
+  const node = data.kind === "milestone" ? data.milestone?.node : undefined;
+  if (!node || node.objectives.length === 0) return [];
+
+  const value = (text: string, color: string): StatSegment => ({
+    text,
+    size: STAT_VALUE_SIZE,
+    color,
+    gapBefore: STAT_LABEL_GAP,
+  });
+
+  const groups: StatGroup[] = node.objectives.map((objective, i) => {
+    const target = formatRequirement(
+      objective.type,
+      objective.value,
+      objective.valueMax
+    );
+    const lead: StatSegment =
+      i === 0
+        ? { text: "NEEDED", size: STAT_LABEL_SIZE, color: TEXT_TERTIARY, gapBefore: 0 }
+        : {
+            text: node.objectiveMode.toLowerCase(),
+            size: STAT_JOIN_SIZE,
+            color: TEXT_TERTIARY,
+            gapBefore: STAT_JOIN_GAP,
+          };
+    return [lead, value(target, TEXT_SECONDARY)];
+  });
+
+  if (data.milestone?.userValue != null) {
+    groups.push([
+      {
+        text: "GOT",
+        size: STAT_LABEL_SIZE,
+        color: TEXT_TERTIARY,
+        gapBefore: STAT_SPLIT_GAP,
+      },
+      value(
+        formatMeasure(node.objectives[0].type, data.milestone.userValue),
+        data.accentColor
+      ),
+    ]);
+  }
+
+  return groups;
+}
+
+function statGroupWidth(ctx: Ctx, group: StatGroup, atRowStart: boolean): number {
+  return group.reduce((w, seg, i) => {
+    ctx.font = `700 ${seg.size}px ${MONO}`;
+    const gap = atRowStart && i === 0 ? 0 : seg.gapBefore;
+    return w + gap + ctx.measureText(seg.text).width;
+  }, 0);
+}
+
+function layoutStats(ctx: Ctx, groups: StatGroup[], maxW: number): StatGroup[][] {
+  const rows: StatGroup[][] = [];
+  let row: StatGroup[] = [];
+  let width = 0;
+
+  for (const group of groups) {
+    const own = statGroupWidth(ctx, group, row.length === 0);
+    if (row.length > 0 && width + own > maxW) {
+      rows.push(row);
+      row = [group];
+      width = statGroupWidth(ctx, group, true);
+      continue;
+    }
+    row.push(group);
+    width += own;
+  }
+
+  if (row.length > 0) rows.push(row);
+  return rows;
+}
+
+function drawStatRows(ctx: Ctx, x: number, y: number, rows: StatGroup[][]): void {
+  let rowY = y;
+  ctx.textBaseline = "alphabetic";
+
+  for (const row of rows) {
+    let statX = x;
+    row.forEach((group, gi) => {
+      group.forEach((seg, si) => {
+        if (gi > 0 || si > 0) statX += seg.gapBefore;
+        ctx.font = `700 ${seg.size}px ${MONO}`;
+        ctx.fillStyle = seg.color;
+        ctx.fillText(seg.text, statX, rowY + STAT_BASELINE);
+        statX += ctx.measureText(seg.text).width;
+      });
+    });
+    rowY += STAT_ROW_H;
+  }
+
+  ctx.textBaseline = "top";
+}
+
 function drawChip(
   ctx: Ctx,
   x: number,
@@ -603,12 +813,21 @@ function drawChip(
 ): number {
   ctx.font = `700 10px ${MONO}`;
   const w = ctx.measureText(label).width + 18;
-  drawRoundedRect(ctx, x, y, w, 20, 5, hexWithAlpha(color, 0.16), hexWithAlpha(color, 0.4));
+  drawRoundedRect(
+    ctx,
+    x,
+    y,
+    w,
+    CHIP_H,
+    5,
+    hexWithAlpha(color, 0.16),
+    hexWithAlpha(color, 0.4)
+  );
   ctx.fillStyle = color;
   ctx.textBaseline = "middle";
-  ctx.fillText(label, x + 9, y + 11);
+  ctx.fillText(label, x + 9, y + CHIP_H / 2 + 1);
   ctx.textBaseline = "top";
-  return x + w + 6;
+  return w;
 }
 
 function drawRightChip(
