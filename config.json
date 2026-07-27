@@ -209,7 +209,7 @@
     "maxOpenAgeSeconds": 600
   },
   "campaignFeed": {
-    "enabled": false,
+    "enabled": true,
     "channelId": "1528699826114527303",
     "wsUrl": null,
     "maxCompletedAgeSeconds": 600,
