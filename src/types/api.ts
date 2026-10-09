@@ -524,3 +524,101 @@ export interface CampaignProgressResponse {
   difficulties: CampaignDifficultyProgressResponse[];
   barriers: CampaignBarrierProgressResponse[];
 }
+
+export interface PublicClanResponse {
+  id: string;
+  slug: string;
+  name: string;
+  tag: string;
+  tagColor: string | null;
+  primaryColor: string | null;
+  secondaryColor: string | null;
+  iconUrl: string | null;
+}
+
+export interface PlayerRef {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  cdnAvatarUrl: string | null;
+  country: string | null;
+  clan: PublicClanResponse | null;
+}
+
+export type ClanArena = "mixed" | "random" | "category_turf" | "complexity_turf";
+export type ClanRuleset = "duel" | "berserker";
+export type ClanWarOutcome =
+  | "attacker_won"
+  | "defender_won"
+  | "drawn"
+  | "retreated"
+  | "forfeited"
+  | "season_ended";
+
+export interface ClanWarSideResponse {
+  clan: PublicClanResponse;
+  lead: PlayerRef | null;
+  stake: number;
+  stakeRemaining: number;
+  standingAtDeclare: number;
+}
+
+export interface ClanWarResponse {
+  id: string;
+  arena: ClanArena;
+  ruleset: ClanRuleset;
+  outcome: ClanWarOutcome | null;
+  declaredBy: PlayerRef | null;
+  attacker: ClanWarSideResponse;
+  defender: ClanWarSideResponse;
+  declaredAt: string;
+  endedAt: string | null;
+}
+
+export interface PublicMapDifficultyResponse {
+  id: string;
+  mapId: string;
+  songName: string;
+  songAuthor: string;
+  mapAuthor: string;
+  coverUrl: string | null;
+  cdnCoverUrl: string | null;
+  difficulty: string;
+}
+
+export interface ClanWarHitResponse {
+  id: string;
+  attacker: PlayerRef;
+  victim: PlayerRef;
+  difficulty: PublicMapDifficultyResponse | null;
+  broke: boolean;
+  standingMoved: number;
+  createdAt: string;
+}
+
+export interface ClanSeasonResponse {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface ClanStandingResponse {
+  clan: PublicClanResponse;
+  rank: number;
+  standing: number;
+}
+
+export interface ClanSeasonClosedResponse {
+  season: ClanSeasonResponse;
+  top: ClanStandingResponse[];
+}
+
+export type ClanFeedFrame =
+  | { type: "war_declared" | "war_ended"; warId: string; data: ClanWarResponse }
+  | { type: "war_break"; warId: string; data: ClanWarHitResponse }
+  | {
+      type: "clan_founded" | "alliance_formed" | "alliance_ended" | "rival_declared";
+      warId: null;
+      data: PublicClanResponse[];
+    }
+  | { type: "season_closed"; warId: null; data: ClanSeasonClosedResponse };

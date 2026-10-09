@@ -11,11 +11,12 @@ import { getMapDifficultyComplexity, getMapLeaderboard, getUserHistoricScores, g
 import { getCategoryLeaderboardAt, getUserCategoryStatistics, getUserStatsDiff } from "../api/statistics.js";
 import { getUserLevel } from "../api/users.js";
 import { config } from "../config.js";
+import { feedChannel } from "./feed.js";
 import type { ScoreResponse, UserCategoryStatisticsResponse } from "../types/api.js";
 import type { ScoreFeedConfig, TopRankCategoryConfig } from "../types/config.js";
-import { CATEGORY_HEX } from "../utils/canvas-utils.js";
+import { CATEGORY_HEX, formatDifficulty } from "../utils/canvas-utils.js";
 import { renderFeedCard, type FeedCardData } from "../utils/feed-card-renderer.js";
-import { renderTemplate } from "../utils/templates.js";
+import { feedSearchLine, renderTemplate } from "../utils/templates.js";
 
 function commonVars(
   score: ScoreResponse,
@@ -66,25 +67,13 @@ async function waitForFreshStats(
 }
 
 export class ScoreFeed {
-  private readonly client: Client;
   private readonly cfg: ScoreFeedConfig;
-  private channel: TextChannel | null = null;
+  private readonly getChannel: () => Promise<TextChannel | null>;
   private readonly topRankAnnounced = new Set<string>();
 
   constructor(client: Client) {
-    this.client = client;
     this.cfg = config.scoreFeed!;
-  }
-
-  private async getChannel(): Promise<TextChannel | null> {
-    if (this.channel) return this.channel;
-
-    const ch = await this.client.channels.fetch(this.cfg.channelId);
-    if (ch?.isTextBased()) {
-      this.channel = ch as TextChannel;
-      return this.channel;
-    }
-    return null;
+    this.getChannel = feedChannel(client, this.cfg.channelId);
   }
 
   async handleScore(score: ScoreResponse): Promise<void> {
@@ -212,7 +201,15 @@ export class ScoreFeed {
           );
         }
 
+        const s = card.score;
         await channel.send({
+          content: feedSearchLine(
+            [s.userName],
+            [`${(s.accuracy * 100).toFixed(2)}%`, `${s.ap.toFixed(2)} AP`],
+            [s.songName, s.songAuthor, formatDifficulty(s.difficulty)],
+            [`115S: ${s.streak115}`]
+          ),
+          allowedMentions: { parse: [] },
           files: [new AttachmentBuilder(result.image, { name: "score-feed.png" })],
           components: [row],
         });

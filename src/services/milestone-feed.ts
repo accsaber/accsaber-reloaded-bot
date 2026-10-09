@@ -14,6 +14,7 @@ import {
 } from "../api/milestones.js";
 import { getUserLevel } from "../api/users.js";
 import { config } from "../config.js";
+import { feedChannel } from "./feed.js";
 import type {
   MilestoneCompletedPayload,
   MilestonePayloadEntry,
@@ -27,8 +28,9 @@ import {
   type MilestoneCardData,
   type MilestoneSetCardData,
   type MilestoneTriggerKind,
+  TIER_LABEL,
 } from "../utils/milestone-card-renderer.js";
-import { renderTemplate } from "../utils/templates.js";
+import { feedSearchLine, renderTemplate } from "../utils/templates.js";
 
 const TIER_RANK: Record<MilestoneTier, number> = {
   bronze: 0,
@@ -41,6 +43,8 @@ const TIER_RANK: Record<MilestoneTier, number> = {
 
 const DEFAULT_MAX_PAYLOAD = 5;
 const DEFAULT_MAX_AGE_SEC = 600;
+const DEFAULT_MAX_PAYLOADS_PER_MINUTE = 15;
+const BURST_WINDOW_MS = 60_000;
 const DEDUPE_TTL_MS = 24 * 60 * 60 * 1000;
 
 interface DedupeEntry {
@@ -55,26 +59,16 @@ interface TriggerResult {
 }
 
 export class MilestoneFeed {
-  private readonly client: Client;
   private readonly cfg: MilestoneFeedConfig;
-  private channel: TextChannel | null = null;
+  private readonly getChannel: () => Promise<TextChannel | null>;
   private readonly dedupe = new Map<string, DedupeEntry>();
+  private readonly arrivals: number[] = [];
+  private burstActive = false;
 
   constructor(client: Client) {
-    this.client = client;
     this.cfg = config.milestoneFeed!;
+    this.getChannel = feedChannel(client, this.cfg.channelId);
     configureCompletionStatsCache(this.cfg.completionStatsTtlSeconds * 1000);
-  }
-
-  private async getChannel(): Promise<TextChannel | null> {
-    if (this.channel) return this.channel;
-
-    const ch = await this.client.channels.fetch(this.cfg.channelId);
-    if (ch?.isTextBased()) {
-      this.channel = ch as TextChannel;
-      return this.channel;
-    }
-    return null;
   }
 
   async handlePayload(payload: MilestoneCompletedPayload): Promise<void> {
@@ -91,6 +85,8 @@ export class MilestoneFeed {
       );
       return;
     }
+
+    if (this.isBurst()) return;
 
     const maxAgeSec = this.cfg.maxCompletedAgeSeconds ?? DEFAULT_MAX_AGE_SEC;
     const completedAtMs = Date.parse(payload.completedAt);
@@ -187,6 +183,12 @@ export class MilestoneFeed {
         );
 
         await channel.send({
+          content: feedSearchLine(
+            [card.user.name],
+            [card.milestone.title, TIER_LABEL[card.milestone.tier]],
+            [card.category?.name]
+          ),
+          allowedMentions: { parse: [] },
           files: [new AttachmentBuilder(result.image, { name: "milestone-feed.png" })],
           components: [row],
         });
@@ -202,6 +204,8 @@ export class MilestoneFeed {
         );
 
         await channel.send({
+          content: feedSearchLine([card.user.name], [card.set.title, "Set Complete"]),
+          allowedMentions: { parse: [] },
           files: [new AttachmentBuilder(result.image, { name: "milestone-set-feed.png" })],
           components: [row],
         });
@@ -360,6 +364,27 @@ export class MilestoneFeed {
       category,
       level,
     };
+  }
+
+  private isBurst(): boolean {
+    const now = Date.now();
+    const limit = this.cfg.maxPayloadsPerMinute ?? DEFAULT_MAX_PAYLOADS_PER_MINUTE;
+
+    this.arrivals.push(now);
+    while (this.arrivals.length > 0 && this.arrivals[0] < now - BURST_WINDOW_MS) {
+      this.arrivals.shift();
+    }
+
+    const bursting = this.arrivals.length > limit;
+    if (bursting && !this.burstActive) {
+      console.log(
+        `[MilestoneFeed] Recalc-shaped burst (>${limit} payloads/min), dropping payloads until it subsides`
+      );
+    } else if (!bursting && this.burstActive) {
+      console.log("[MilestoneFeed] Burst subsided, resuming");
+    }
+    this.burstActive = bursting;
+    return bursting;
   }
 
   private pruneDedupe(): void {

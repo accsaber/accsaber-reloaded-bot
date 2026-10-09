@@ -9,13 +9,15 @@ import {
 import { getCategoryCodeById, getCategoryNameById } from "../api/categories.js";
 import { getUserLevel } from "../api/users.js";
 import { config } from "../config.js";
+import { feedChannel } from "./feed.js";
 import type { MissionCompletedPayload } from "../types/api.js";
 import type { MissionFeedConfig } from "../types/config.js";
 import {
   renderMissionCard,
   type MissionCardData,
+  BAND_LABEL,
 } from "../utils/mission-card-renderer.js";
-import { renderTemplate } from "../utils/templates.js";
+import { feedSearchLine, renderTemplate } from "../utils/templates.js";
 
 const DEFAULT_MAX_AGE_SEC = 600;
 const DEDUPE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -25,27 +27,15 @@ interface DedupeEntry {
 }
 
 export class MissionFeed {
-  private readonly client: Client;
   private readonly cfg: MissionFeedConfig;
-  private channel: TextChannel | null = null;
+  private readonly getChannel: () => Promise<TextChannel | null>;
   private readonly dedupe = new Map<string, DedupeEntry>();
   private readonly allowedBands: Set<string>;
 
   constructor(client: Client) {
-    this.client = client;
     this.cfg = config.missionFeed!;
+    this.getChannel = feedChannel(client, this.cfg.channelId);
     this.allowedBands = new Set(this.cfg.bands.map((b) => b.toLowerCase()));
-  }
-
-  private async getChannel(): Promise<TextChannel | null> {
-    if (this.channel) return this.channel;
-
-    const ch = await this.client.channels.fetch(this.cfg.channelId);
-    if (ch?.isTextBased()) {
-      this.channel = ch as TextChannel;
-      return this.channel;
-    }
-    return null;
   }
 
   async handlePayload(payload: MissionCompletedPayload): Promise<void> {
@@ -95,6 +85,12 @@ export class MissionFeed {
       );
 
       await channel.send({
+        content: feedSearchLine(
+          [card.user.name],
+          [BAND_LABEL[card.mission.band], card.mission.name],
+          [card.category?.name]
+        ),
+        allowedMentions: { parse: [] },
         files: [new AttachmentBuilder(result.image, { name: "mission-feed.png" })],
         components: [row],
       });

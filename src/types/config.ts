@@ -121,6 +121,7 @@ export interface MilestoneFeedConfig {
   completionStatsTtlSeconds: number;
   maxMilestonesPerPayload?: number;
   maxCompletedAgeSeconds?: number;
+  maxPayloadsPerMinute?: number;
 }
 
 export interface MissionFeedConfig {
@@ -182,6 +183,13 @@ export interface CampaignFeedConfig {
   maxCompletedAgeSeconds?: number;
 }
 
+export interface ClanFeedConfig {
+  enabled: boolean;
+  channelId: string;
+  wsUrl?: string | null;
+  skipTypes?: string[];
+}
+
 export interface LevelTierRoles {
   newcomer: string;
   apprentice: string;
@@ -233,5 +241,6 @@ export interface Config {
   missionFeed?: MissionFeedConfig;
   crateFeed?: CrateFeedConfig;
   campaignFeed?: CampaignFeedConfig;
+  clanFeed?: ClanFeedConfig;
   supporters?: SupportersConfig;
 }

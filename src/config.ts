@@ -52,6 +52,10 @@ function loadConfig(): Config {
     if (!cf.rules?.completion) required.push("campaignFeed.rules.completion");
   }
 
+  if (parsed.clanFeed?.enabled && !parsed.clanFeed.channelId) {
+    required.push("clanFeed.channelId");
+  }
+
   if (required.length > 0) {
     throw new Error(`Missing required config fields: ${required.join(", ")}`);
   }

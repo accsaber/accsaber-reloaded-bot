@@ -80,7 +80,7 @@ export const TIER_HEX: Record<MilestoneTier, string> = {
   apex: "#ff2e92",
 };
 
-const TIER_LABEL: Record<MilestoneTier, string> = {
+export const TIER_LABEL: Record<MilestoneTier, string> = {
   bronze: "Bronze",
   silver: "Silver",
   gold: "Gold",

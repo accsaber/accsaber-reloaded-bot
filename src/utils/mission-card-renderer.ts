@@ -54,7 +54,7 @@ const CARD_Y = 14;
 const CARD_W = W - CARD_X * 2;
 const PAD = 22;
 
-const BAND_LABEL: Record<MissionBand, string> = {
+export const BAND_LABEL: Record<MissionBand, string> = {
   easy: "Easy",
   medium: "Medium",
   hard: "Hard",

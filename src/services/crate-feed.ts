@@ -8,10 +8,12 @@ import {
 } from "discord.js";
 import { getUserLevel } from "../api/users.js";
 import { config } from "../config.js";
+import { feedChannel } from "./feed.js";
 import type { CrateFeedFrame } from "../types/api.js";
 import type { CrateFeedConfig } from "../types/config.js";
-import { renderCrateCard, type CrateCardData } from "../utils/crate-card-renderer.js";
+import { rarityLabel, renderCrateCard, type CrateCardData } from "../utils/crate-card-renderer.js";
 import { buildCrateCardData, isNoteworthyOpen } from "./crate-rules.js";
+import { feedSearchLine } from "../utils/templates.js";
 
 const DEFAULT_MAX_AGE_SEC = 600;
 const DEDUPE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -21,25 +23,13 @@ interface DedupeEntry {
 }
 
 export class CrateFeed {
-  private readonly client: Client;
   private readonly cfg: CrateFeedConfig;
-  private channel: TextChannel | null = null;
+  private readonly getChannel: () => Promise<TextChannel | null>;
   private readonly dedupe = new Map<string, DedupeEntry>();
 
   constructor(client: Client) {
-    this.client = client;
     this.cfg = config.crateFeed!;
-  }
-
-  private async getChannel(): Promise<TextChannel | null> {
-    if (this.channel) return this.channel;
-
-    const ch = await this.client.channels.fetch(this.cfg.channelId);
-    if (ch?.isTextBased()) {
-      this.channel = ch as TextChannel;
-      return this.channel;
-    }
-    return null;
+    this.getChannel = feedChannel(client, this.cfg.channelId);
   }
 
   async handleFrame(frame: CrateFeedFrame): Promise<void> {
@@ -90,6 +80,13 @@ export class CrateFeed {
       );
 
       await channel.send({
+        content: feedSearchLine(
+          [card.user.name],
+          [card.crate.name, card.reward.name, rarityLabel(card.reward.rarity)],
+          card.reward.modifiers.map((m) => m.name),
+          [card.reward.unusualEffect?.name]
+        ),
+        allowedMentions: { parse: [] },
         files: [new AttachmentBuilder(result.image, { name: "crate-feed.png" })],
         components: [row],
       });

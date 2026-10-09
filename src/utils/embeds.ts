@@ -15,6 +15,7 @@ export const Colors = {
     warning: 0xeab308,
     error: 0xef4444,
     info: 0x3b82f6,
+    neutral: 0x6b7280,
   },
   difficulty: {
     easy: 0x3cb371,

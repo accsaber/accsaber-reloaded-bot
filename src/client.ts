@@ -8,11 +8,15 @@ import {
   type SlashCommandOptionsOnlyBuilder,
   type SlashCommandSubcommandsOnlyBuilder,
 } from "discord.js";
-import type { CampaignWebSocket } from "./services/campaign-ws.js";
-import type { CrateWebSocket } from "./services/crate-ws.js";
-import type { MilestoneWebSocket } from "./services/milestone-ws.js";
-import type { MissionWebSocket } from "./services/mission-ws.js";
-import type { ScoreWebSocket } from "./services/score-ws.js";
+import type { FeedWebSocket } from "./services/feed.js";
+import type {
+  CampaignFeedFrame,
+  ClanFeedFrame,
+  CrateFeedFrame,
+  MilestoneCompletedPayload,
+  MissionCompletedPayload,
+  ScoreResponse,
+} from "./types/api.js";
 
 export interface Command {
   data:
@@ -24,11 +28,12 @@ export interface Command {
 
 export class ArBot extends Client {
   commands = new Collection<string, Command>();
-  scoreWs?: ScoreWebSocket;
-  milestoneWs?: MilestoneWebSocket;
-  missionWs?: MissionWebSocket;
-  crateWs?: CrateWebSocket;
-  campaignWs?: CampaignWebSocket;
+  scoreWs?: FeedWebSocket<ScoreResponse>;
+  milestoneWs?: FeedWebSocket<MilestoneCompletedPayload>;
+  missionWs?: FeedWebSocket<MissionCompletedPayload>;
+  crateWs?: FeedWebSocket<CrateFeedFrame>;
+  campaignWs?: FeedWebSocket<CampaignFeedFrame>;
+  clanWs?: FeedWebSocket<ClanFeedFrame>;
 
   constructor() {
     super({

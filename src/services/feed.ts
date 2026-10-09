@@ -1,57 +1,75 @@
+import type { Client, TextChannel } from "discord.js";
 import WebSocket from "ws";
 import { config } from "../config.js";
-import type { CrateFeedFrame } from "../types/api.js";
 
-const CRATE_OPENED = "crate_opened";
+const FAST_RETRY_LIMIT = 3;
+const FAST_RETRY_INTERVAL = 5_000;
+const SLOW_RETRY_INTERVAL = 60_000;
+const PING_INTERVAL = 30_000;
+const PONG_TIMEOUT = 10_000;
 
-function deriveWsUrl(): string {
-  if (config.crateFeed?.wsUrl) return config.crateFeed.wsUrl;
-
-  const base = config.api.baseUrl.replace(/\/v1\/?$/, "");
-  const wsBase = base.replace(/^https:/, "wss:").replace(/^http:/, "ws:");
-  return `${wsBase}/ws/crates`;
+export function feedChannel(
+  client: Client,
+  channelId: string
+): () => Promise<TextChannel | null> {
+  let channel: TextChannel | null = null;
+  return async () => {
+    if (channel) return channel;
+    const ch = await client.channels.fetch(channelId);
+    if (ch?.isTextBased()) channel = ch as TextChannel;
+    return channel;
+  };
 }
 
-export class CrateWebSocket {
-  private static readonly FAST_RETRY_LIMIT = 3;
-  private static readonly FAST_RETRY_INTERVAL = 5_000;
-  private static readonly SLOW_RETRY_INTERVAL = 60_000;
-  private static readonly PING_INTERVAL = 30_000;
-  private static readonly PONG_TIMEOUT = 10_000;
+function deriveWsUrl(path: string): string {
+  const base = config.api.baseUrl.replace(/\/v1\/?$/, "");
+  const wsBase = base.replace(/^https:/, "wss:").replace(/^http:/, "ws:");
+  return `${wsBase}${path}`;
+}
 
+export class FeedWebSocket<T> {
   private ws: WebSocket | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private pingTimer: ReturnType<typeof setInterval> | null = null;
   private pongTimer: ReturnType<typeof setTimeout> | null = null;
-  private handlers: ((frame: CrateFeedFrame) => void)[] = [];
+  private handlers: ((message: T) => void)[] = [];
   private destroyed = false;
   private failedAttempts = 0;
+  private readonly name: string;
   private readonly url: string;
+  private readonly parse: (raw: unknown) => T | null;
 
-  constructor() {
-    this.url = deriveWsUrl();
+  constructor(
+    name: string,
+    path: string,
+    wsUrl: string | null | undefined,
+    parse: (raw: unknown) => T | null = (raw) => raw as T
+  ) {
+    this.name = name;
+    this.url = wsUrl || deriveWsUrl(path);
+    this.parse = parse;
   }
 
-  onCrateOpened(handler: (frame: CrateFeedFrame) => void): void {
+  onMessage(handler: (message: T) => void): void {
     this.handlers.push(handler);
   }
 
   connect(): void {
     if (this.destroyed) return;
 
-    console.log(`[CrateFeed] Connecting to ${this.url}`);
+    console.log(`[${this.name}] Connecting to ${this.url}`);
 
     try {
       this.ws = new WebSocket(this.url);
     } catch (err) {
-      console.error("[CrateFeed] Failed to construct WebSocket:", err);
+      console.error(`[${this.name}] Failed to construct WebSocket:`, err);
       this.scheduleReconnect();
       return;
     }
 
     this.ws.on("open", () => {
       this.failedAttempts = 0;
-      console.log("[CrateFeed] WebSocket connected");
+      console.log(`[${this.name}] WebSocket connected`);
       this.startHeartbeat();
     });
 
@@ -65,7 +83,7 @@ export class CrateWebSocket {
 
     this.ws.on("close", (code, reason) => {
       console.log(
-        `[CrateFeed] WebSocket closed (code=${code}, reason=${reason.toString()})`
+        `[${this.name}] WebSocket closed (code=${code}, reason=${reason.toString()})`
       );
       this.stopHeartbeat();
       this.ws = null;
@@ -73,7 +91,7 @@ export class CrateWebSocket {
     });
 
     this.ws.on("error", (err) => {
-      console.error("[CrateFeed] WebSocket error:", err);
+      console.error(`[${this.name}] WebSocket error:`, err);
     });
   }
 
@@ -98,14 +116,14 @@ export class CrateWebSocket {
       try {
         this.ws.ping();
       } catch (err) {
-        console.error("[CrateFeed] Failed to send ping:", err);
+        console.error(`[${this.name}] Failed to send ping:`, err);
         return;
       }
       this.pongTimer = setTimeout(() => {
-        console.warn("[CrateFeed] Pong timeout, terminating connection");
+        console.warn(`[${this.name}] Pong timeout, terminating connection`);
         this.ws?.terminate();
-      }, CrateWebSocket.PONG_TIMEOUT);
-    }, CrateWebSocket.PING_INTERVAL);
+      }, PONG_TIMEOUT);
+    }, PING_INTERVAL);
   }
 
   private stopHeartbeat(): void {
@@ -128,13 +146,11 @@ export class CrateWebSocket {
     if (this.reconnectTimer) return;
 
     this.failedAttempts++;
-    const isFastRetry = this.failedAttempts <= CrateWebSocket.FAST_RETRY_LIMIT;
-    const delay = isFastRetry
-      ? CrateWebSocket.FAST_RETRY_INTERVAL
-      : CrateWebSocket.SLOW_RETRY_INTERVAL;
+    const isFastRetry = this.failedAttempts <= FAST_RETRY_LIMIT;
+    const delay = isFastRetry ? FAST_RETRY_INTERVAL : SLOW_RETRY_INTERVAL;
 
     console.log(
-      `[CrateFeed] Reconnecting in ${delay}ms (attempt ${this.failedAttempts}, ${isFastRetry ? "fast" : "slow"})`
+      `[${this.name}] Reconnecting in ${delay}ms (attempt ${this.failedAttempts}, ${isFastRetry ? "fast" : "slow"})`
     );
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
@@ -143,25 +159,22 @@ export class CrateWebSocket {
   }
 
   private handleMessage(data: string): void {
-    let frame: CrateFeedFrame;
+    let raw: unknown;
     try {
-      frame = JSON.parse(data) as CrateFeedFrame;
+      raw = JSON.parse(data);
     } catch (err) {
-      console.error("[CrateFeed] Failed to parse message:", err);
+      console.error(`[${this.name}] Failed to parse message:`, err);
       return;
     }
 
-    if (frame?.type !== CRATE_OPENED) return;
-    if (!frame.player || !frame.open?.reward?.item) {
-      console.warn("[CrateFeed] Dropping malformed crate_opened frame");
-      return;
-    }
+    const message = this.parse(raw);
+    if (message === null) return;
 
     for (const handler of this.handlers) {
       try {
-        handler(frame);
+        handler(message);
       } catch (err) {
-        console.error("[CrateFeed] Handler error:", err);
+        console.error(`[${this.name}] Handler error:`, err);
       }
     }
   }

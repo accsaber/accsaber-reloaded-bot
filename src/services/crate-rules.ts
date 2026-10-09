@@ -100,3 +100,13 @@ export function buildCrateCardData(
     level,
   };
 }
+
+export function parseCrateFrame(raw: unknown): CrateFeedFrame | null {
+  const frame = raw as CrateFeedFrame | null;
+  if (frame?.type !== "crate_opened") return null;
+  if (!frame.player || !frame.open?.reward?.item) {
+    console.warn("[CrateFeed] Dropping malformed crate_opened frame");
+    return null;
+  }
+  return frame;
+}

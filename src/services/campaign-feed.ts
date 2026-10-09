@@ -10,6 +10,7 @@ import { getCampaignProgress } from "../api/campaigns.js";
 import { getCategoryCodeById, getCategoryNameById } from "../api/categories.js";
 import { getUserLevel } from "../api/users.js";
 import { config } from "../config.js";
+import { feedChannel } from "./feed.js";
 import type {
   CampaignFeedFrame,
   CampaignProgressResponse,
@@ -33,6 +34,7 @@ import {
   needsProgressLookup,
   type MilestoneCandidate,
 } from "./campaign-rules.js";
+import { feedSearchLine } from "../utils/templates.js";
 
 const DEFAULT_MAX_AGE_SEC = 600;
 const DEDUPE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -42,26 +44,14 @@ interface DedupeEntry {
 }
 
 export class CampaignFeed {
-  private readonly client: Client;
   private readonly cfg: CampaignFeedConfig;
-  private channel: TextChannel | null = null;
+  private readonly getChannel: () => Promise<TextChannel | null>;
   private readonly dedupe = new Map<string, DedupeEntry>();
   private readonly tracker = new CampaignMilestoneTracker();
 
   constructor(client: Client) {
-    this.client = client;
     this.cfg = config.campaignFeed!;
-  }
-
-  private async getChannel(): Promise<TextChannel | null> {
-    if (this.channel) return this.channel;
-
-    const ch = await this.client.channels.fetch(this.cfg.channelId);
-    if (ch?.isTextBased()) {
-      this.channel = ch as TextChannel;
-      return this.channel;
-    }
-    return null;
+    this.getChannel = feedChannel(client, this.cfg.channelId);
   }
 
   async handleFrame(frame: CampaignFeedFrame): Promise<void> {
@@ -181,6 +171,12 @@ export class CampaignFeed {
       );
 
       await channel.send({
+        content: feedSearchLine(
+          [card.user.name],
+          [card.campaign.name, card.milestone?.label ?? "Completed"],
+          [card.category?.name]
+        ),
+        allowedMentions: { parse: [] },
         files: [new AttachmentBuilder(result.image, { name: fileName })],
         components: [row],
       });

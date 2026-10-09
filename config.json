@@ -162,6 +162,7 @@
     "completionStatsTtlSeconds": 300,
     "maxMilestonesPerPayload": 5,
     "maxCompletedAgeSeconds": 600,
+    "maxPayloadsPerMinute": 15,
     "rules": {
       "firstCompletion": {
         "enabled": true,
@@ -268,6 +269,12 @@
         "label": "Event Pings"
       }
     }
+  },
+  "clanFeed": {
+    "enabled": false,
+    "channelId": "1557899594644463678",
+    "wsUrl": null,
+    "skipTypes": ["clan_founded", "war_break"]
   },
   "supporters": {
     "enabled": true,

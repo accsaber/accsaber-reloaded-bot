@@ -381,3 +381,17 @@ function templateVars(
     elapsed: elapsed ?? "",
   };
 }
+
+export function parseCampaignFrame(raw: unknown): CampaignFeedFrame | null {
+  const frame = raw as CampaignFeedFrame | null;
+  if (frame?.type !== NODE_COMPLETED && frame?.type !== CAMPAIGN_COMPLETED) return null;
+  if (!frame.campaign?.id || !frame.player?.userId) {
+    console.warn(`[CampaignFeed] Dropping malformed ${frame.type} frame`);
+    return null;
+  }
+  if (frame.type === NODE_COMPLETED && !frame.node?.id) {
+    console.warn("[CampaignFeed] Dropping node_completed frame without node");
+    return null;
+  }
+  return frame;
+}
