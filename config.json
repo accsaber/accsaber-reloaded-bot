@@ -35,27 +35,27 @@
         {
           "ap": 700,
           "enabled": true,
-          "messageTemplate": "Just set their first 700+ AP score {firstEverLabel}!"
+          "messageTemplate": "First 700+ AP score {firstEverLabel}"
         },
         {
           "ap": 800,
           "enabled": true,
-          "messageTemplate": "Just set their first 800+ AP score {firstEverLabel}!"
+          "messageTemplate": "First 800+ AP score {firstEverLabel}"
         },
         {
           "ap": 900,
           "enabled": true,
-          "messageTemplate": "Just set their first 900+ AP score {firstEverLabel}!"
+          "messageTemplate": "First 900+ AP score {firstEverLabel}"
         },
         {
           "ap": 1000,
           "enabled": true,
-          "messageTemplate": "Just set their first 1000+ AP score {firstEverLabel}!"
+          "messageTemplate": "First 1000+ AP score {firstEverLabel}"
         },
         {
           "ap": 1100,
           "enabled": true,
-          "messageTemplate": "Just set their first 1100+ AP score {firstEverLabel}!"
+          "messageTemplate": "First 1100+ AP score {firstEverLabel}"
         }
       ]
     },
@@ -63,19 +63,19 @@
       "enabled": true,
       "apThreshold": 1060,
       "embedColor": "#38bdf8",
-      "messageTemplate": "Just set a massive score!"
+      "messageTemplate": "Set a {ap} AP score"
     },
     "underdog": {
       "enabled": true,
       "embedColor": "#22c55e",
       "mapRankThreshold": 5,
       "minCategoryRank": 50,
-      "messageTemplate": "(#{categoryRank} on {categoryName}) just got #{rank} on this map!"
+      "messageTemplate": "Got #{rank} on this map while sitting #{categoryRank} in {categoryName}"
     },
     "rankOne": {
       "enabled": true,
       "embedColor": "#ffd700",
-      "messageTemplate": "Just got a #1!"
+      "messageTemplate": "Took #1 on this map"
     },
     "topRank": {
       "enabled": true,
@@ -99,39 +99,39 @@
       ],
       "detailThreshold": 10,
       "passedThreshold": 50,
-      "detailMessageTemplate": "Is now #{categoryRank} in {categoryName}!",
+      "detailMessageTemplate": "Now #{categoryRank} in {categoryName}",
       "detailSubtitleTemplate": "Moved from #{previousRank}{passedInfo}",
       "thresholdSubtitleTemplate": "Now #{categoryRank}{passedInfo}",
       "thresholds": [
         {
           "rank": 10,
           "enabled": true,
-          "messageTemplate": "Entered the top 10 in {categoryName}!"
+          "messageTemplate": "Entered the top 10 in {categoryName}"
         },
         {
           "rank": 25,
           "enabled": true,
-          "messageTemplate": "Entered the top 25 in {categoryName}!"
+          "messageTemplate": "Entered the top 25 in {categoryName}"
         },
         {
           "rank": 50,
           "enabled": true,
-          "messageTemplate": "Entered the top 50 in {categoryName}!"
+          "messageTemplate": "Entered the top 50 in {categoryName}"
         },
         {
           "rank": 100,
           "enabled": true,
-          "messageTemplate": "Entered the top 100 in {categoryName}!"
+          "messageTemplate": "Entered the top 100 in {categoryName}"
         },
         {
           "rank": 200,
           "enabled": true,
-          "messageTemplate": "Entered the top 200 in {categoryName}!"
+          "messageTemplate": "Entered the top 200 in {categoryName}"
         },
         {
           "rank": 300,
           "enabled": true,
-          "messageTemplate": "Entered the top 300 in {categoryName}!"
+          "messageTemplate": "Entered the top 300 in {categoryName}"
         }
       ]
     },
@@ -152,7 +152,7 @@
           "threshold": 12
         }
       ],
-      "messageTemplate": "Hit a {streak115} note 115 streak on {songName}!"
+      "messageTemplate": "Hit a {streak115} note 115 streak"
     }
   },
   "milestoneFeed": {
@@ -166,27 +166,27 @@
     "rules": {
       "firstCompletion": {
         "enabled": true,
-        "messageTemplate": "Was the FIRST EVER to unlock the following {milestoneType}!",
+        "messageTemplate": "First player to unlock this {milestoneType}",
         "color": "#FFD700"
       },
       "rare": {
         "enabled": true,
         "percentageThreshold": 1.0,
         "minPlayersToCount": 100,
-        "messageTemplate": "Just unlocked a rare {milestoneType}!",
-        "subtitleTemplate": "Only {percentage}% of players have this",
+        "messageTemplate": "Unlocked a rare {milestoneType}",
+        "subtitleTemplate": "{percentage}% of players have it",
         "color": "#9B59B6"
       },
       "diamondPlus": {
         "enabled": true,
         "tiers": ["diamond", "apex"],
-        "messageTemplate": "Just unlocked a {tier} tier {milestoneType}!",
+        "messageTemplate": "Unlocked a {tier} {milestoneType}",
         "color": "#5DADE2"
       }
     },
     "setCompletion": {
       "enabled": true,
-      "messageTemplate": "Just completed a milestone set!",
+      "messageTemplate": "Completed a milestone set",
       "color": "#ec4899"
     }
   },
@@ -195,7 +195,7 @@
     "channelId": "1509851271635406898",
     "wsUrl": null,
     "bands": ["extreme"],
-    "messageTemplate": "Just conquered an EXTREME {pool} mission!",
+    "messageTemplate": "Completed an extreme {pool} mission",
     "maxCompletedAgeSeconds": 600
   },
   "crateFeed": {
@@ -205,8 +205,8 @@
     "rarities": ["legendary", "mythic"],
     "postOnModifier": true,
     "ignoredModifiers": ["normal", "founders"],
-    "messageTemplate": "Just unboxed {article} {rarity} {itemType} from {crateName}!",
-    "unusualSubtitleTemplate": "Rolled an Unusual: {effectName}",
+    "messageTemplate": "Got {article} {rarity} {itemType} from {crateName}",
+    "unusualSubtitleTemplate": "Unusual roll with the {effectName} effect",
     "maxOpenAgeSeconds": 600
   },
   "campaignFeed": {

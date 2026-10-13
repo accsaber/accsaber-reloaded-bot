@@ -27,7 +27,6 @@ import {
   formatDifficulty,
   hexWithAlpha,
   numberFmt,
-  registerFonts,
   relativeTime,
   roundRect,
   trendStr,
@@ -51,8 +50,6 @@ const W = 900;
 const H = 620;
 
 export async function renderProfileCard(data: ProfileCardData): Promise<Buffer> {
-  registerFonts();
-
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext("2d");
 

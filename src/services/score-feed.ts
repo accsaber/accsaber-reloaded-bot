@@ -250,7 +250,7 @@ export class ScoreFeed {
       const vars = {
         ...commonVars(score, category.name),
         threshold: overallMatched.ap,
-        firstEverLabel: "EVER",
+        firstEverLabel: "ever",
       };
       return {
         score,
@@ -258,7 +258,6 @@ export class ScoreFeed {
         accentColor: overallMatched.embedColor ?? firstMilestone.embedColor,
         categoryCode: category.code,
         categoryName: category.name,
-        preamble: "They earned it with a score on:",
       };
     }
 
@@ -283,7 +282,6 @@ export class ScoreFeed {
       accentColor: catMatched.embedColor ?? firstMilestone.embedColor,
       categoryCode: category.code,
       categoryName: category.name,
-      preamble: "They earned it with a score on:",
     };
   }
 
@@ -342,7 +340,6 @@ export class ScoreFeed {
       accentColor: underdog.embedColor,
       categoryCode: category.code,
       categoryName: category.name,
-      extraInfo: `Category rank: #${stats.ranking}`,
     };
   }
 
@@ -364,7 +361,7 @@ export class ScoreFeed {
       (s) => s.rank === 2 && s.userId !== score.userId
     );
     if (previous) {
-      extraInfo = `Sniped ${previous.userName} who had ${previous.ap.toFixed(2)} AP (${(previous.accuracy * 100).toFixed(2)}%)`;
+      extraInfo = `Sniped ${previous.userName}, who had ${previous.ap.toFixed(2)} AP at ${(previous.accuracy * 100).toFixed(2)}%`;
     }
 
     return {
@@ -459,7 +456,6 @@ export class ScoreFeed {
         categoryCode: catConfig.categoryCode,
         categoryName: catName,
         subtitle: renderTemplate(topRank.detailSubtitleTemplate, subtitleVars),
-        preamble: "They earned it with a score on:",
       };
     }
 
@@ -497,7 +493,6 @@ export class ScoreFeed {
       categoryCode: catConfig.categoryCode,
       categoryName: catName,
       subtitle: showPassed ? renderTemplate(topRank.thresholdSubtitleTemplate, subtitleVars) : undefined,
-      preamble: "They earned it with a score on:",
     };
   }
 

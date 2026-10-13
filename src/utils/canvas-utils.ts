@@ -1,6 +1,8 @@
 import { createCanvas, GlobalFonts, loadImage } from "@napi-rs/canvas";
 import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { getTierForLevel } from "./roles.js";
 
 const ASSETS = existsSync(join(process.cwd(), "src", "assets"))
   ? join(process.cwd(), "src", "assets")
@@ -37,11 +39,7 @@ export const CATEGORY_LABEL: Record<string, string> = {
 export const SANS = '"DM Sans", "Noto Sans JP", system-ui, -apple-system, sans-serif';
 export const MONO = '"Poppins", "Noto Sans JP", system-ui, sans-serif';
 
-let fontsRegistered = false;
-
-export function registerFonts(): void {
-  if (fontsRegistered) return;
-  fontsRegistered = true;
+function registerFonts(): void {
   const register = (file: string, family: string) => {
     const path = join(FONTS_DIR, file);
     if (existsSync(path)) GlobalFonts.registerFromPath(path, family);
@@ -54,6 +52,8 @@ export function registerFonts(): void {
   register("Poppins-Bold.ttf", "Poppins");
   register("NotoSansJP.ttf", "Noto Sans JP");
 }
+
+registerFonts();
 
 export type Ctx = ReturnType<ReturnType<typeof createCanvas>["getContext"]>;
 
@@ -442,3 +442,255 @@ export function formatDifficulty(diff: string): string {
 }
 
 
+
+export type Img = Awaited<ReturnType<typeof loadImage>>;
+
+export async function loadOptionalImage(url: string | null | undefined): Promise<Img | null> {
+  if (!url) return null;
+  try {
+    return await fetchImage(url);
+  } catch {
+    return null;
+  }
+}
+
+export function truncate(ctx: Ctx, text: string, maxWidth: number): string {
+  let out = text;
+  while (ctx.measureText(out).width > maxWidth && out.length > 6) {
+    out = out.slice(0, -4) + "...";
+  }
+  return out;
+}
+
+export function wrapText(ctx: Ctx, text: string, maxWidth: number, maxLines: number): string[] {
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let current = "";
+
+  for (const word of words) {
+    const test = current ? `${current} ${word}` : word;
+    if (ctx.measureText(test).width <= maxWidth) {
+      current = test;
+      continue;
+    }
+    if (current) lines.push(current);
+    current = word;
+    if (lines.length >= maxLines) break;
+  }
+  if (current && lines.length < maxLines) lines.push(current);
+
+  if (lines.length === maxLines) {
+    const consumed = lines.flatMap((l) => l.split(/\s+/)).length;
+    let last = lines[maxLines - 1];
+    if (words.length > consumed) {
+      while (ctx.measureText(last + "...").width > maxWidth && last.length > 4) {
+        last = last.slice(0, -2);
+      }
+      last = last + "...";
+    }
+    lines[maxLines - 1] = last;
+  }
+
+  return lines;
+}
+
+export function drawRightChip(
+  ctx: Ctx,
+  rightX: number,
+  y: number,
+  label: string,
+  color: string
+): number {
+  ctx.font = `700 10px ${MONO}`;
+  let text = label;
+  while (ctx.measureText(text).width > 180 && text.length > 6) {
+    text = text.slice(0, -4) + "...";
+  }
+  const w = ctx.measureText(text).width + 16;
+  const x = rightX - w;
+  drawRoundedRect(ctx, x, y, w, 18, 4, hexWithAlpha(color, 0.14));
+  ctx.fillStyle = color;
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, x + 8, y + 9);
+  ctx.textBaseline = "top";
+  return x;
+}
+
+export function drawBigValue(ctx: Ctx, x: number, y: number, value: string, unit: string, unitColor: string): void {
+  ctx.font = `700 28px ${MONO}`;
+  const w = ctx.measureText(value).width;
+  ctx.fillStyle = TEXT_PRIMARY;
+  ctx.fillText(value, x, y);
+  ctx.font = `700 11px ${MONO}`;
+  ctx.fillStyle = unitColor;
+  ctx.fillText(unit, x + w + 6, y + 14);
+}
+
+export const FEED_W = 680;
+const CARD_X = 18;
+const CARD_Y = 14;
+const CARD_W = FEED_W - CARD_X * 2;
+const CARD_PAD = 22;
+const AVATAR = 50;
+
+export const FEED_LEFT = CARD_X + CARD_PAD + 4;
+export const FEED_RIGHT = CARD_X + CARD_W - CARD_PAD;
+export const FEED_TOP = CARD_Y + CARD_PAD - 2;
+export const FEED_BODY_TOP = FEED_TOP + AVATAR + 18;
+
+export interface FeedShell {
+  user: { name: string; country?: string | null; avatarUrl?: string | null };
+  level?: number;
+  title: string;
+  titleColor: string;
+  subtitle?: string;
+  chips?: { label: string; color: string }[];
+  wash: string;
+  washAlpha?: number;
+  backdrop?: Img | null;
+}
+
+export async function openFeedCard(
+  contentH: number,
+  shell: FeedShell
+): Promise<{ ctx: Ctx; finish: () => Promise<Buffer> }> {
+  const H = CARD_Y * 2 + contentH;
+  const canvas = createCanvas(FEED_W, H);
+  const ctx = canvas.getContext("2d");
+  const avatar = await loadOptionalImage(shell.user.avatarUrl);
+
+  ctx.fillStyle = BG_BASE;
+  ctx.fillRect(0, 0, FEED_W, H);
+  drawRoundedRect(ctx, CARD_X, CARD_Y, CARD_W, contentH, 12, "#13131c", BG_OVERLAY);
+
+  ctx.save();
+  roundRect(ctx, CARD_X, CARD_Y, CARD_W, contentH, 12);
+  ctx.clip();
+  if (shell.backdrop) {
+    const img = shell.backdrop;
+    const bandW = 300;
+    const bandX = CARD_X + CARD_W - bandW;
+    const scale = Math.max(bandW / img.width, contentH / img.height);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(bandX, CARD_Y, bandW, contentH);
+    ctx.clip();
+    ctx.globalAlpha = 0.22;
+    ctx.drawImage(
+      img,
+      bandX + (bandW - img.width * scale) / 2,
+      CARD_Y + (contentH - img.height * scale) / 2,
+      img.width * scale,
+      img.height * scale
+    );
+    ctx.restore();
+    const fade = ctx.createLinearGradient(bandX, 0, bandX + bandW, 0);
+    fade.addColorStop(0, "#13131c");
+    fade.addColorStop(0.6, hexWithAlpha("#13131c", 0.5));
+    fade.addColorStop(1, hexWithAlpha("#13131c", 0.3));
+    ctx.fillStyle = fade;
+    ctx.fillRect(bandX, CARD_Y, bandW, contentH);
+  }
+  const wash = ctx.createRadialGradient(CARD_X + CARD_W - 60, CARD_Y + 20, 0, CARD_X + CARD_W - 60, CARD_Y + 20, 420);
+  wash.addColorStop(0, hexWithAlpha(shell.wash, shell.washAlpha ?? 0.16));
+  wash.addColorStop(1, hexWithAlpha(shell.wash, 0));
+  ctx.fillStyle = wash;
+  ctx.fillRect(CARD_X, CARD_Y, CARD_W, contentH);
+  ctx.restore();
+
+  ctx.textBaseline = "top";
+  const y = FEED_TOP;
+
+  let topRightX = FEED_RIGHT;
+  for (const chip of shell.chips ?? []) {
+    topRightX = drawRightChip(ctx, topRightX, y + 4, chip.label.toUpperCase(), chip.color) - 6;
+  }
+
+  const tier = shell.level ? getTierForLevel(shell.level) : undefined;
+  const ringColor = tier ? `#${tier.color.toString(16).padStart(6, "0")}` : TEXT_SECONDARY;
+  const boxX = FEED_LEFT - 2;
+  const boxY = y - 2;
+  const box = AVATAR + 4;
+  drawRoundedRect(ctx, boxX, boxY, box, box, 10, BG_ELEVATED);
+  if (avatar) {
+    ctx.save();
+    roundRect(ctx, boxX, boxY, box, box, 10);
+    ctx.clip();
+    ctx.drawImage(avatar, boxX, boxY, box, box);
+    ctx.restore();
+  }
+  roundRect(ctx, boxX, boxY, box, box, 10);
+  ctx.strokeStyle = ringColor;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  const nameX = FEED_LEFT + AVATAR + 12;
+  ctx.font = `700 17px ${SANS}`;
+  ctx.fillStyle = TEXT_PRIMARY;
+  const name = shell.user.name.length > 24 ? shell.user.name.slice(0, 22) + "..." : shell.user.name;
+  ctx.fillText(name, nameX, y + 1);
+
+  const nameW = ctx.measureText(name).width;
+  const country = shell.user.country?.toUpperCase();
+  if (country && country.length === 2) {
+    ctx.font = `700 9px ${MONO}`;
+    const tagW = ctx.measureText(country).width + 10;
+    drawRoundedRect(ctx, nameX + nameW + 8, y + 3, tagW, 15, 3, BG_OVERLAY);
+    ctx.fillStyle = TEXT_SECONDARY;
+    ctx.textBaseline = "middle";
+    ctx.fillText(country, nameX + nameW + 13, y + 10);
+    ctx.textBaseline = "top";
+  }
+
+  const headerW = topRightX - nameX - 12;
+  ctx.font = `600 12px ${SANS}`;
+  ctx.fillStyle = shell.titleColor;
+  ctx.fillText(truncate(ctx, shell.title, headerW), nameX, y + 24);
+
+  if (shell.subtitle) {
+    ctx.font = `500 11px ${SANS}`;
+    ctx.fillStyle = TEXT_SECONDARY;
+    ctx.fillText(truncate(ctx, shell.subtitle, headerW), nameX, y + 40);
+  }
+
+  const finish = async () => {
+    try {
+      const logo = await loadImage(await readFile(join(ASSETS_DIR, "logo.png")));
+      ctx.save();
+      ctx.globalAlpha = 0.45;
+      ctx.drawImage(logo, FEED_RIGHT - 14, CARD_Y + contentH - 22, 14, 14);
+      ctx.restore();
+    } catch {
+      /* logo not available */
+    }
+    return canvas.toBuffer("image/png");
+  };
+
+  return { ctx, finish };
+}
+
+export function drawBody(
+  ctx: Ctx,
+  kicker: string,
+  kickerColor: string,
+  title: string,
+  description?: string | null
+): void {
+  const x = FEED_LEFT + 70;
+  const maxW = FEED_RIGHT - x;
+  const y = FEED_BODY_TOP;
+
+  ctx.font = `700 10px ${MONO}`;
+  ctx.fillStyle = kickerColor;
+  ctx.fillText(kicker.toUpperCase(), x, y + 2);
+
+  ctx.font = `700 18px ${SANS}`;
+  ctx.fillStyle = TEXT_PRIMARY;
+  ctx.fillText(truncate(ctx, title, maxW), x, y + 16);
+
+  if (description) {
+    ctx.font = `400 12px ${SANS}`;
+    ctx.fillStyle = TEXT_SECONDARY;
+    wrapText(ctx, description, maxW, 2).forEach((line, i) => ctx.fillText(line, x, y + 38 + i * 16));
+  }
+}
