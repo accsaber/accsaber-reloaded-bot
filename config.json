@@ -70,7 +70,7 @@
       "embedColor": "#22c55e",
       "mapRankThreshold": 5,
       "minCategoryRank": 50,
-      "messageTemplate": "Got #{rank} on this map while sitting #{categoryRank} in {categoryName}"
+      "messageTemplate": "Got #{rank} on this map while being #{categoryRank} in {categoryName}"
     },
     "rankOne": {
       "enabled": true,

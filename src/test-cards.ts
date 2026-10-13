@@ -108,7 +108,7 @@ const cards: { name: string; data: FeedCardData }[] = [
         accuracy: 0.9784,
         streak115: 2,
       }),
-      title: "Got #3 on this map while sitting #1311 in Standard Acc",
+      title: "Got #3 on this map while being #1311 in Standard Acc",
       accentColor: "#22c55e",
       categoryCode: "standard_acc",
       categoryName: "Standard Acc",
