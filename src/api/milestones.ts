@@ -26,7 +26,7 @@ export async function getCompletionStats(): Promise<MilestoneCompletionResponse[
   inflight = apiGet<MilestoneCompletionResponse[]>("/milestones/completion-stats")
     .then((stats) => {
       completionStatsCache!.set(stats);
-      completionStatsIndex = new Map(stats.map((s) => [s.id, s]));
+      completionStatsIndex = new Map(stats.map((s) => [s.milestoneId, s]));
       return stats;
     })
     .finally(() => {

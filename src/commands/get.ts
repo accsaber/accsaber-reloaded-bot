@@ -53,7 +53,7 @@ const get: Command = {
     if (!userId) {
       try {
         const link = await getDiscordLink(interaction.user.id);
-        userId = link.userId;
+        userId = link.player.id;
       } catch (err) {
         if (err instanceof ApiError && err.status === 404) {
           await interaction.editReply({

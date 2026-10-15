@@ -108,8 +108,7 @@ export interface StatsDiffResponse {
 
 export interface DiscordLinkResponse {
   discordId: string;
-  userId: string;
-  playerName: string;
+  player: PlayerRef;
   createdAt: string;
 }
 
@@ -167,7 +166,6 @@ export interface MilestonePayloadEntry {
   type: MilestoneType;
   tier: MilestoneTier;
   xp: number;
-  awardsItemId: string | null;
 }
 
 export interface MilestoneSetPayloadEntry {
@@ -175,21 +173,17 @@ export interface MilestoneSetPayloadEntry {
   title: string;
   description: string;
   bonusXp: number;
-  awardsItemId: string | null;
 }
 
 export interface MilestoneCompletedPayload {
-  userId: string;
-  userName: string;
-  userCountry: string;
-  userAvatarUrl: string;
+  player: PlayerRef;
   completedAt: string;
   milestones?: MilestonePayloadEntry[];
   sets?: MilestoneSetPayloadEntry[];
 }
 
 export interface MilestoneCompletionResponse {
-  id: string;
+  milestoneId: string;
   setId: string;
   categoryId: string | null;
   title: string;
@@ -203,10 +197,7 @@ export interface MilestoneCompletionResponse {
 }
 
 export interface MilestoneHolderResponse {
-  userId: string;
-  userName: string;
-  avatarUrl: string;
-  country: string;
+  player: PlayerRef;
   completedAt: string;
 }
 
@@ -319,17 +310,9 @@ export interface CrateOpenResponse {
   rolledAt: string;
 }
 
-export interface CrateFeedUserRef {
-  id: string;
-  name: string;
-  avatarUrl: string | null;
-  cdnAvatarUrl: string | null;
-  country: string | null;
-}
-
 export interface CrateFeedFrame {
   type: string;
-  player: CrateFeedUserRef;
+  player: PlayerRef;
   open: CrateOpenResponse;
 }
 
@@ -467,17 +450,9 @@ export interface CampaignDifficultyResponse {
   modifiers?: CampaignModifierRequirementResponse[];
 }
 
-export interface CampaignFeedUserRef {
-  userId: string;
-  userName: string;
-  country?: string;
-  avatarUrl?: string;
-  cdnAvatarUrl?: string;
-}
-
 export interface CampaignFeedFrame {
   type: string;
-  player?: CampaignFeedUserRef;
+  player?: PlayerRef;
   campaign: CampaignResponse;
   node?: CampaignDifficultyResponse;
   completedAt: string;
@@ -539,10 +514,10 @@ export interface PublicClanResponse {
 export interface PlayerRef {
   id: string;
   name: string;
-  avatarUrl: string | null;
-  cdnAvatarUrl: string | null;
-  country: string | null;
-  clan: PublicClanResponse | null;
+  avatarUrl?: string | null;
+  cdnAvatarUrl?: string | null;
+  country?: string | null;
+  clan?: PublicClanResponse | null;
 }
 
 export type ClanArena = "mixed" | "random" | "category_turf" | "complexity_turf";
@@ -557,10 +532,19 @@ export type ClanWarOutcome =
 
 export interface ClanWarSideResponse {
   clan: PublicClanResponse;
+  team: "attack" | "defend";
   lead: PlayerRef | null;
   stake: number;
   stakeRemaining: number;
   standingAtDeclare: number;
+  fallen: boolean;
+}
+
+export interface ClanWarTeamResponse {
+  lead: PublicClanResponse | null;
+  stake: number;
+  stakeRemaining: number;
+  sides: ClanWarSideResponse[];
 }
 
 export interface ClanWarResponse {
@@ -569,8 +553,8 @@ export interface ClanWarResponse {
   ruleset: ClanRuleset;
   outcome: ClanWarOutcome | null;
   declaredBy: PlayerRef | null;
-  attacker: ClanWarSideResponse;
-  defender: ClanWarSideResponse;
+  attack: ClanWarTeamResponse;
+  defend: ClanWarTeamResponse;
   declaredAt: string;
   endedAt: string | null;
 }

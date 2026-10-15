@@ -15,7 +15,7 @@ import {
 export type MilestoneTriggerKind = "first" | "rare" | "diamond_plus";
 
 export interface MilestoneSetCardData {
-  user: { id: string; name: string; country: string; avatarUrl: string };
+  user: { id: string; name: string; country: string | null; avatarUrl: string | null };
   set: {
     id: string;
     title: string;
@@ -29,7 +29,7 @@ export interface MilestoneSetCardData {
 }
 
 export interface MilestoneCardData {
-  user: { id: string; name: string; country: string; avatarUrl: string };
+  user: { id: string; name: string; country: string | null; avatarUrl: string | null };
   milestone: {
     id: string;
     title: string;

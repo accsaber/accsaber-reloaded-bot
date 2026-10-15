@@ -49,8 +49,8 @@ const SLUG = process.env.TEST_CAMPAIGN_SLUG ?? "acc-champ-community-campaign";
 const USER = process.env.TEST_USER ?? "76561198012241978";
 
 const PLAYER = {
-  userId: USER,
-  userName: "PulseLane",
+  id: USER,
+  name: "PulseLane",
   country: "us",
   avatarUrl: "https://cdn.assets.beatleader.com/76561198012241978R10.png",
 };

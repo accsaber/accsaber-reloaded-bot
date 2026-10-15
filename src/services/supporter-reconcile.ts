@@ -77,7 +77,7 @@ export async function reconcileSupporterRoles(
           continue;
         }
 
-        const state = await getUserSupporterState(link.userId);
+        const state = await getUserSupporterState(link.player.id);
         if (state.currentTier === expectedTierCode) continue;
 
         await member.roles.remove(roleId, "Supporter tier reconciliation");

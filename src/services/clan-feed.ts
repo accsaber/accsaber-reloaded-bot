@@ -7,6 +7,7 @@ import type {
   ClanSeasonClosedResponse,
   ClanWarHitResponse,
   ClanWarResponse,
+  ClanWarTeamResponse,
   PublicClanResponse,
 } from "../types/api.js";
 import { formatDifficulty } from "../utils/canvas-utils.js";
@@ -77,16 +78,21 @@ function clanEmbed(clan: PublicClanResponse | null | undefined): EmbedBuilder {
   return embed;
 }
 
+function teamClan(team: ClanWarTeamResponse): PublicClanResponse {
+  return team.lead ?? team.sides[0].clan;
+}
+
 function warDeclared(war: ClanWarResponse, warId: string): EmbedBuilder {
-  const { attacker, defender } = war;
-  return clanEmbed(attacker.clan)
-    .setTitle(`${tag(attacker.clan)} declares war on ${tag(defender.clan)}`)
+  const attacker = teamClan(war.attack);
+  const defender = teamClan(war.defend);
+  return clanEmbed(attacker)
+    .setTitle(`${tag(attacker)} declares war on ${tag(defender)}`)
     .setURL(warUrl(warId))
-    .setDescription(`${clanLink(attacker.clan)} vs ${clanLink(defender.clan)}`)
+    .setDescription(`${clanLink(attacker)} vs ${clanLink(defender)}`)
     .addFields(
       { name: "Arena", value: ARENA_LABEL[war.arena] ?? war.arena, inline: true },
       { name: "Ruleset", value: RULESET_LABEL[war.ruleset] ?? war.ruleset, inline: true },
-      { name: "Stake", value: `\`${whole(attacker.stake)}\``, inline: true },
+      { name: "Stake", value: `\`${whole(war.attack.stake)}\``, inline: true },
       {
         name: "Declared by",
         value: escapeMarkdown(war.declaredBy?.name ?? "Unknown"),
@@ -96,16 +102,17 @@ function warDeclared(war: ClanWarResponse, warId: string): EmbedBuilder {
 }
 
 function warEnded(war: ClanWarResponse, warId: string): EmbedBuilder {
-  const { attacker, defender } = war;
-  const atk = tag(attacker.clan);
-  const def = tag(defender.clan);
+  const attacker = teamClan(war.attack);
+  const defender = teamClan(war.defend);
+  const atk = tag(attacker);
+  const def = tag(defender);
 
   const [title, winner]: [string, PublicClanResponse | null] = (() => {
     switch (war.outcome) {
       case "attacker_won":
-        return [`${atk} defeats ${def}`, attacker.clan];
+        return [`${atk} defeats ${def}`, attacker];
       case "defender_won":
-        return [`${def} holds the line against ${atk}`, defender.clan];
+        return [`${def} holds the line against ${atk}`, defender];
       case "drawn":
         return ["War ends in a draw", null];
       case "retreated":
@@ -125,8 +132,8 @@ function warEnded(war: ClanWarResponse, warId: string): EmbedBuilder {
     .setURL(warUrl(warId))
     .setDescription(
       [
-        `${clanLink(attacker.clan)}: \`${whole(attacker.stakeRemaining)}\` stake left`,
-        `${clanLink(defender.clan)}: \`${whole(defender.stakeRemaining)}\` stake left`,
+        `${clanLink(attacker)}: \`${whole(war.attack.stakeRemaining)}\` stake left`,
+        `${clanLink(defender)}: \`${whole(war.defend.stakeRemaining)}\` stake left`,
       ].join("\n")
     );
 }

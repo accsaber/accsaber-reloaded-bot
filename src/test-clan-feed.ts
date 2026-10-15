@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { buildClanEmbed, parseClanFrame } from "./services/clan-feed.js";
-import type { ClanWarResponse, PlayerRef, PublicClanResponse } from "./types/api.js";
+import type { ClanWarResponse, ClanWarSideResponse, PlayerRef, PublicClanResponse } from "./types/api.js";
 
 const ATK: PublicClanResponse = {
   id: "c1",
@@ -33,14 +33,38 @@ const player = (id: string, name: string, clan: PublicClanResponse): PlayerRef =
   clan,
 });
 
+const side = (
+  clan: PublicClanResponse,
+  team: ClanWarSideResponse["team"],
+  stakeRemaining: number
+): ClanWarSideResponse => ({
+  clan,
+  team,
+  lead: null,
+  stake: 1499.6,
+  stakeRemaining,
+  standingAtDeclare: 0,
+  fallen: false,
+});
+
 const war = (outcome: ClanWarResponse["outcome"]): ClanWarResponse => ({
   id: "w1",
   arena: "category_turf",
   ruleset: "berserker",
   outcome,
   declaredBy: player("76561198000000001", "PulseLane", ATK),
-  attacker: { clan: ATK, lead: null, stake: 1499.6, stakeRemaining: 820.4, standingAtDeclare: 0 },
-  defender: { clan: DEF, lead: null, stake: 1499.6, stakeRemaining: 0.2, standingAtDeclare: 0 },
+  attack: {
+    lead: ATK,
+    stake: 1499.6,
+    stakeRemaining: 820.4,
+    sides: [side(ATK, "attack", 820.4)],
+  },
+  defend: {
+    lead: null,
+    stake: 1499.6,
+    stakeRemaining: 0.2,
+    sides: [side(DEF, "defend", 0.2)],
+  },
   declaredAt: "2026-10-09T00:00:00Z",
   endedAt: null,
 });

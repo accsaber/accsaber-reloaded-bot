@@ -81,7 +81,7 @@ export class MilestoneFeed {
     const maxPayload = this.cfg.maxMilestonesPerPayload ?? DEFAULT_MAX_PAYLOAD;
     if (milestones.length > maxPayload) {
       console.log(
-        `[MilestoneFeed] Dropping backfill-shaped payload (milestones=${milestones.length}) for user ${payload.userName}`
+        `[MilestoneFeed] Dropping backfill-shaped payload (milestones=${milestones.length}) for user ${payload.player.name}`
       );
       return;
     }
@@ -94,7 +94,7 @@ export class MilestoneFeed {
       const ageSec = (Date.now() - completedAtMs) / 1000;
       if (ageSec > maxAgeSec) {
         console.log(
-          `[MilestoneFeed] Dropping stale payload (age=${Math.round(ageSec)}s) for user ${payload.userName}`
+          `[MilestoneFeed] Dropping stale payload (age=${Math.round(ageSec)}s) for user ${payload.player.name}`
         );
         return;
       }
@@ -139,7 +139,7 @@ export class MilestoneFeed {
 
       if (!trigger) continue;
 
-      const dedupeKey = `${payload.userId}:${milestone.id}`;
+      const dedupeKey = `${payload.player.id}:${milestone.id}`;
       if (this.dedupe.has(dedupeKey)) continue;
       this.dedupe.set(dedupeKey, { expiresAt: Date.now() + DEDUPE_TTL_MS });
 
@@ -152,7 +152,7 @@ export class MilestoneFeed {
 
     if (this.cfg.setCompletion.enabled) {
       for (const set of sets) {
-        const dedupeKey = `${payload.userId}:set:${set.id}`;
+        const dedupeKey = `${payload.player.id}:set:${set.id}`;
         if (this.dedupe.has(dedupeKey)) continue;
         this.dedupe.set(dedupeKey, { expiresAt: Date.now() + DEDUPE_TTL_MS });
 
@@ -228,7 +228,7 @@ export class MilestoneFeed {
     });
     if (
       holders.totalElements !== 1 ||
-      holders.content[0]?.userId !== payload.userId
+      holders.content[0]?.player.id !== payload.player.id
     ) {
       return null;
     }
@@ -236,7 +236,7 @@ export class MilestoneFeed {
     const vars = {
       milestoneType: milestone.type,
       tier: milestone.tier,
-      playerName: payload.userName,
+      playerName: payload.player.name,
     };
     return {
       kind: "first",
@@ -263,7 +263,7 @@ export class MilestoneFeed {
     const vars = {
       milestoneType: milestone.type,
       tier: milestone.tier,
-      playerName: payload.userName,
+      playerName: payload.player.name,
       percentage: stats.completionPercentage.toFixed(2),
     };
     return {
@@ -284,7 +284,7 @@ export class MilestoneFeed {
     const vars = {
       milestoneType: milestone.type,
       tier: milestone.tier,
-      playerName: payload.userName,
+      playerName: payload.player.name,
     };
     return {
       kind: "diamond_plus",
@@ -298,22 +298,22 @@ export class MilestoneFeed {
     set: MilestoneSetPayloadEntry
   ): Promise<MilestoneSetCardData> {
     const { setCompletion } = this.cfg;
-    const levelResult = await Promise.allSettled([getUserLevel(payload.userId)]);
+    const levelResult = await Promise.allSettled([getUserLevel(payload.player.id)]);
     const level =
       levelResult[0].status === "fulfilled" ? levelResult[0].value.level : undefined;
 
     const vars = {
-      playerName: payload.userName,
+      playerName: payload.player.name,
       setTitle: set.title,
       bonusXp: set.bonusXp,
     };
 
     return {
       user: {
-        id: payload.userId,
-        name: payload.userName,
-        country: payload.userCountry,
-        avatarUrl: payload.userAvatarUrl,
+        id: payload.player.id,
+        name: payload.player.name,
+        country: payload.player.country ?? null,
+        avatarUrl: payload.player.cdnAvatarUrl ?? payload.player.avatarUrl ?? null,
       },
       set: {
         id: set.id,
@@ -333,7 +333,7 @@ export class MilestoneFeed {
     trigger: TriggerResult
   ): Promise<MilestoneCardData> {
     const [levelResult, categoryResult] = await Promise.allSettled([
-      getUserLevel(payload.userId),
+      getUserLevel(payload.player.id),
       milestone.categoryId ? resolveCategory(milestone.categoryId) : Promise.resolve(undefined),
     ]);
 
@@ -343,10 +343,10 @@ export class MilestoneFeed {
 
     return {
       user: {
-        id: payload.userId,
-        name: payload.userName,
-        country: payload.userCountry,
-        avatarUrl: payload.userAvatarUrl,
+        id: payload.player.id,
+        name: payload.player.name,
+        country: payload.player.country ?? null,
+        avatarUrl: payload.player.cdnAvatarUrl ?? payload.player.avatarUrl ?? null,
       },
       milestone: {
         id: milestone.id,

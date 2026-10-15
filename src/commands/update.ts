@@ -32,7 +32,7 @@ const update: Command = {
       throw err;
     }
 
-    const levelData = await getUserLevel(link.userId);
+    const levelData = await getUserLevel(link.player.id);
 
     const guild = interaction.guild;
     if (!guild) {

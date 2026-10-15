@@ -64,7 +64,7 @@ export class CampaignFeed {
       const ageSec = (Date.now() - completedAtMs) / 1000;
       if (ageSec > maxAgeSec) {
         console.log(
-          `[CampaignFeed] Dropping stale ${frame.type} (age=${Math.round(ageSec)}s) for user ${frame.player.userName}`
+          `[CampaignFeed] Dropping stale ${frame.type} (age=${Math.round(ageSec)}s) for user ${frame.player.name}`
         );
         return;
       }
@@ -89,7 +89,7 @@ export class CampaignFeed {
     if (!progress) return;
 
     const candidates = this.tracker.candidates(
-      frame.player!.userId,
+      frame.player!.id,
       progress,
       frame.node?.id,
       ignoredLabelSet(this.cfg)
@@ -109,7 +109,7 @@ export class CampaignFeed {
     const rule = milestoneRuleFor(frame, candidate.label, this.cfg);
     if (!rule) return;
 
-    const dedupeKey = `${frame.player!.userId}:${frame.campaign.id}:${candidate.label.toLowerCase()}`;
+    const dedupeKey = `${frame.player!.id}:${frame.campaign.id}:${candidate.label.toLowerCase()}`;
     if (this.dedupe.has(dedupeKey)) return;
     this.dedupe.set(dedupeKey, { expiresAt: Date.now() + DEDUPE_TTL_MS });
 
@@ -130,7 +130,7 @@ export class CampaignFeed {
   private async handleCampaignCompleted(frame: CampaignFeedFrame): Promise<void> {
     if (!isAnnounceableCompletion(frame, this.cfg)) return;
 
-    const dedupeKey = `${frame.player!.userId}:${frame.campaign.id}:complete`;
+    const dedupeKey = `${frame.player!.id}:${frame.campaign.id}:complete`;
     if (this.dedupe.has(dedupeKey)) return;
     this.dedupe.set(dedupeKey, { expiresAt: Date.now() + DEDUPE_TTL_MS });
 
@@ -189,7 +189,7 @@ export class CampaignFeed {
     frame: CampaignFeedFrame
   ): Promise<CampaignProgressResponse | null> {
     try {
-      return await getCampaignProgress(frame.campaign.slug, frame.player!.userId);
+      return await getCampaignProgress(frame.campaign.slug, frame.player!.id);
     } catch (err) {
       console.error(
         `[CampaignFeed] Failed to fetch progress for ${frame.campaign.slug}:`,
@@ -202,7 +202,7 @@ export class CampaignFeed {
   private async resolveLevel(
     frame: CampaignFeedFrame
   ): Promise<number | undefined> {
-    return getUserLevel(frame.player!.userId)
+    return getUserLevel(frame.player!.id)
       .then((res) => res.level)
       .catch(() => undefined);
   }

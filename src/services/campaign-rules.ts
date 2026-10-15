@@ -253,8 +253,8 @@ export function campaignCategoryId(
 function userRef(frame: CampaignFeedFrame): CampaignCardData["user"] {
   const player = frame.player!;
   return {
-    id: player.userId,
-    name: player.userName,
+    id: player.id,
+    name: player.name,
     country: player.country ?? null,
     avatarUrl: player.cdnAvatarUrl ?? player.avatarUrl ?? null,
   };
@@ -354,7 +354,7 @@ function templateVars(
   );
 
   return {
-    playerName: frame.player?.userName ?? "",
+    playerName: frame.player?.name ?? "",
     campaignName: campaign.name,
     creatorName: campaign.creatorAlias || campaign.creatorName,
     campaignXp: campaign.completionXp,
@@ -385,7 +385,7 @@ function templateVars(
 export function parseCampaignFrame(raw: unknown): CampaignFeedFrame | null {
   const frame = raw as CampaignFeedFrame | null;
   if (frame?.type !== NODE_COMPLETED && frame?.type !== CAMPAIGN_COMPLETED) return null;
-  if (!frame.campaign?.id || !frame.player?.userId) {
+  if (!frame.campaign?.id || !frame.player?.id) {
     console.warn(`[CampaignFeed] Dropping malformed ${frame.type} frame`);
     return null;
   }
