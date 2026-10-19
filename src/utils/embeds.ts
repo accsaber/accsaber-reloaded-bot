@@ -43,6 +43,11 @@ export const Colors = {
     transcendent: 0x22d3ee,
     mythic: 0xef4444,
     ascendant: 0xf472b6,
+    fabled: 0x62d98a,
+    exalted: 0xe9e7f4,
+    titanic: 0x8da3c0,
+    promethean: 0xff5c33,
+    supreme: 0xffffff,
   },
 } as const;
 

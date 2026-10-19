@@ -509,6 +509,7 @@ export interface PublicClanResponse {
   primaryColor: string | null;
   secondaryColor: string | null;
   iconUrl: string | null;
+  bannerUrl?: string | null;
 }
 
 export interface PlayerRef {

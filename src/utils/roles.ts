@@ -20,7 +20,12 @@ export const LEVEL_TIERS: LevelTier[] = [
   { name: "legend", min: 70, max: 79, color: Colors.levelTier.legend },
   { name: "transcendent", min: 80, max: 89, color: Colors.levelTier.transcendent },
   { name: "mythic", min: 90, max: 99, color: Colors.levelTier.mythic },
-  { name: "ascendant", min: 100, max: Infinity, color: Colors.levelTier.ascendant },
+  { name: "ascendant", min: 100, max: 119, color: Colors.levelTier.ascendant },
+  { name: "fabled", min: 120, max: 139, color: Colors.levelTier.fabled },
+  { name: "exalted", min: 140, max: 159, color: Colors.levelTier.exalted },
+  { name: "titanic", min: 160, max: 179, color: Colors.levelTier.titanic },
+  { name: "promethean", min: 180, max: 199, color: Colors.levelTier.promethean },
+  { name: "supreme", min: 200, max: Infinity, color: Colors.levelTier.supreme },
 ];
 
 export function getTierForLevel(level: number): LevelTier | undefined {

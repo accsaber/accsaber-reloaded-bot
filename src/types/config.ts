@@ -202,6 +202,11 @@ export interface LevelTierRoles {
   transcendent: string;
   mythic: string;
   ascendant: string;
+  fabled: string;
+  exalted: string;
+  titanic: string;
+  promethean: string;
+  supreme: string;
 }
 
 export interface ReactionRoleEntry {
