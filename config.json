@@ -272,6 +272,16 @@
         "emoji": "🎉",
         "roleId": "1527604733383016538",
         "label": "Event Pings"
+      },
+      "clanUpdates": {
+        "emoji": "🛡️",
+        "roleId": "1565400350465331393",
+        "label": "Clan Updates"
+      },
+      "criteriaUpdates": {
+        "emoji": "📋",
+        "roleId": "1565400301094314087",
+        "label": "Criteria Updates"
       }
     }
   },
