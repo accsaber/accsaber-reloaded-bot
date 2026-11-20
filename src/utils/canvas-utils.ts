@@ -395,7 +395,7 @@ export function drawBody(ctx: Ctx, body: FeedBody): number {
   let y = BODY_TOP + (body.art ? Math.max(0, (size - textH) / 2) : 0);
 
   const reward = body.reward
-    ? drawLine(ctx, FEED_RIGHT, y, [body.reward], { size: titleSize, weight: 700, align: "right" }) + 16
+    ? drawLine(ctx, FEED_RIGHT, y, [body.reward], { size: body.reward.size ?? titleSize, weight: 700, align: "right" }) + 16
     : 0;
   const title = typeof body.title === "string" ? [{ text: body.title }] : body.title;
   drawLine(ctx, x, y, title, { size: titleSize, weight: 700, family: SANS, color: TEXT_PRIMARY, gap: 8, maxWidth: maxWidth - reward });

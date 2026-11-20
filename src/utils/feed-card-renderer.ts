@@ -58,7 +58,7 @@ export async function renderFeedCard(data: FeedCardData): Promise<FeedCardResult
       data.complexity ? { text: data.complexity.toFixed(1), color: TEXT_TERTIARY, size: 12, weight: 500 } : null,
       { text: data.categoryName, color: catColor, size: 12, weight: 600 },
     ],
-    reward: { text: `${numberFmt(score.ap, 2)} AP`, color: TEXT_PRIMARY },
+    reward: { text: `${numberFmt(score.ap, 2)} AP`, color: TEXT_PRIMARY, size: 28 },
     description: `${score.songAuthor} · ${score.mapAuthor}`,
     lines: [
       [{ text: data.extraInfo ?? "" }],
