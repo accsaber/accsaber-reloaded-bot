@@ -2,10 +2,12 @@ export interface MilestoneThresholdConfig {
   ap: number;
   enabled: boolean;
   messageTemplate: string;
+  embedColor?: string;
 }
 
 export interface FirstMilestoneConfig {
   enabled: boolean;
+  embedColor: string;
   thresholds: MilestoneThresholdConfig[];
 }
 
@@ -13,6 +15,7 @@ export interface AllScoresAboveConfig {
   enabled: boolean;
   apThreshold: number;
   messageTemplate: string;
+  embedColor: string;
 }
 
 export interface UnderdogConfig {
@@ -20,11 +23,13 @@ export interface UnderdogConfig {
   mapRankThreshold: number;
   minCategoryRank: number;
   messageTemplate: string;
+  embedColor: string;
 }
 
 export interface RankOneConfig {
   enabled: boolean;
   messageTemplate: string;
+  embedColor: string;
 }
 
 export interface TopRankThresholdConfig {
@@ -35,6 +40,7 @@ export interface TopRankThresholdConfig {
 
 export interface TopRankCategoryConfig {
   categoryCode: string;
+  embedColor: string;
 }
 
 export interface TopRankConfig {
@@ -57,6 +63,7 @@ export interface StreakConfig {
   enabled: boolean;
   categoryThresholds: StreakCategoryConfig[];
   messageTemplate: string;
+  embedColor: string;
 }
 
 export interface ScoreFeedConfig {

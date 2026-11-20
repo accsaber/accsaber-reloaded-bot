@@ -18,7 +18,9 @@ import { WEBSITE_URL, playerUrl } from "./embeds.js";
 export interface FeedCardData {
   score: ScoreResponse;
   title: string;
+  accentColor: string;
   categoryCode: string;
+  categoryName: string;
   level?: number;
   complexity?: number;
   subtitle?: string;
@@ -39,7 +41,7 @@ export async function renderFeedCard(data: FeedCardData): Promise<FeedCardResult
       user: { name: score.userName, country: score.country, avatarUrl: score.avatarUrl },
       level: data.level,
       title: data.title,
-      titleColor: catColor,
+      titleColor: data.accentColor,
       subtitle: data.subtitle,
     }),
     loadOptionalImage(score.coverUrl),
@@ -51,6 +53,7 @@ export async function renderFeedCard(data: FeedCardData): Promise<FeedCardResult
       { text: score.songName },
       { ...difficultySegment(score.difficulty), size: 12, weight: 600 },
       data.complexity ? { text: data.complexity.toFixed(1), color: TEXT_TERTIARY, size: 12, weight: 500 } : null,
+      { text: data.categoryName, color: catColor, size: 12, weight: 600 },
     ],
     description: `${score.songAuthor} · ${score.mapAuthor}`,
     lines: [
