@@ -102,14 +102,13 @@ function warDeclared(war: ClanWarResponse, warId: string): ClanPost {
   return {
     card: {
       ...clanHeader(attacker),
-      headerTitle: `Declared war on ${tag(defender)}`,
+      headerTitle: `Declared war on ${tag(defender)}!`,
       accent,
-      chips: [{ label: ARENA_LABEL[war.arena] ?? war.arena, color: accent }],
       icon: "target",
-      kicker: RULESET_LABEL[war.ruleset] ?? war.ruleset,
+      label: `${RULESET_LABEL[war.ruleset] ?? war.ruleset} · ${ARENA_LABEL[war.arena] ?? war.arena}`,
       title: `${attacker.name} vs ${defender.name}`,
       description: war.declaredBy ? `Declared by ${war.declaredBy.name}` : undefined,
-      value: { amount: war.attack.stake, unit: "STAKE" },
+      value: { amount: war.attack.stake, unit: "stake" },
     },
     link: { label: "War", url: warUrl(warId) },
   };
@@ -121,12 +120,12 @@ function warEnded(war: ClanWarResponse, warId: string): ClanPost {
   const atk = tag(attacker);
   const def = tag(defender);
 
-  const [kicker, headerTitle, winner]: [string, string, ClanWarTeamResponse | null] = (() => {
+  const [label, headerTitle, winner]: [string, string, ClanWarTeamResponse | null] = (() => {
     switch (war.outcome) {
       case "attacker_won":
-        return ["Victory", `Defeated ${def}`, war.attack];
+        return ["Victory", `Defeated ${def}!`, war.attack];
       case "defender_won":
-        return ["Defended", `Held the line against ${atk}`, war.defend];
+        return ["Defended", `Held the line against ${atk}!`, war.defend];
       case "drawn":
         return ["Draw", `Drew with ${def}`, null];
       case "retreated":
@@ -147,10 +146,10 @@ function warEnded(war: ClanWarResponse, warId: string): ClanPost {
       headerTitle,
       accent: winner ? clanColor(headerClan) : NEUTRAL,
       icon: winner ? "trophy" : "flag",
-      kicker,
+      label,
       title: `${attacker.name} vs ${defender.name}`,
       description: `${atk} ${whole(war.attack.stakeRemaining)} stake left · ${def} ${whole(war.defend.stakeRemaining)} stake left`,
-      value: winner ? { amount: winner.stakeRemaining, unit: "STAKE LEFT" } : undefined,
+      value: winner ? { amount: winner.stakeRemaining, unit: "stake left" } : undefined,
     },
     link: { label: "War", url: warUrl(warId) },
   };
@@ -162,16 +161,16 @@ function warBreak(hit: ClanWarHitResponse, warId: string): ClanPost {
     card: {
       header: playerHeader(attacker),
       bannerUrl: attacker.clan?.bannerUrl,
-      headerTitle: `Broke ${victim.name}'s guard`,
+      headerTitle: `Broke ${victim.name}'s guard!`,
       accent: clanColor(attacker.clan),
       icon: "target",
       coverUrl: difficulty?.cdnCoverUrl ?? difficulty?.coverUrl,
-      kicker: attacker.clan && victim.clan ? `${tag(attacker.clan)} vs ${tag(victim.clan)}` : "Guard break",
+      label: attacker.clan && victim.clan ? `${tag(attacker.clan)} vs ${tag(victim.clan)}` : "Guard break",
       title: difficulty?.songName ?? "Guard break",
       description: difficulty
-        ? `${difficulty.songAuthor} - ${difficulty.mapAuthor} · ${formatDifficulty(difficulty.difficulty)}`
+        ? `${difficulty.songAuthor} · ${difficulty.mapAuthor} · ${formatDifficulty(difficulty.difficulty)}`
         : undefined,
-      value: { amount: hit.standingMoved, unit: "STANDING" },
+      value: { amount: hit.standingMoved, unit: "standing" },
     },
     link: { label: "War", url: warUrl(warId) },
   };
@@ -190,7 +189,7 @@ function seasonClosed(closed: ClanSeasonClosedResponse): ClanPost {
         headerTitle: "Season is over",
         accent: GOLD,
         icon: "trophy",
-        kicker: "Season over",
+        label: "Season over",
         title: closed.season.name,
         description: "No clans placed this season.",
       },
@@ -200,13 +199,13 @@ function seasonClosed(closed: ClanSeasonClosedResponse): ClanPost {
   return {
     card: {
       ...clanHeader(first.clan),
-      headerTitle: `Won ${closed.season.name}`,
+      headerTitle: `Won ${closed.season.name}!`,
       accent: GOLD,
       icon: "trophy",
-      kicker: "Season over",
+      label: "Season over",
       title: closed.season.name,
-      description: rest.map((s) => `#${s.rank} ${tag(s.clan)} ${s.clan.name} - ${whole(s.standing)}`).join(" · ") || undefined,
-      value: { amount: first.standing, unit: "STANDING" },
+      description: rest.map((s) => `#${s.rank} ${tag(s.clan)} ${s.clan.name} ${whole(s.standing)}`).join(", ") || undefined,
+      value: { amount: first.standing, unit: "standing" },
     },
     link,
   };
@@ -216,7 +215,7 @@ function pair(
   a: PublicClanResponse,
   b: PublicClanResponse,
   headerTitle: string,
-  kicker: string,
+  label: string,
   icon: ClanCardData["icon"],
   joiner: string
 ): ClanPost {
@@ -226,7 +225,7 @@ function pair(
       headerTitle,
       accent: clanColor(a),
       icon,
-      kicker,
+      label,
       title: `${a.name} ${joiner} ${b.name}`,
     },
     link: { label: "Clan", url: clanUrl(a) },
@@ -246,10 +245,10 @@ export function buildClanPost(frame: ClanFeedFrame): ClanPost {
       return {
         card: {
           ...clanHeader(clan),
-          headerTitle: "A new clan rises",
+          headerTitle: "A new clan rises!",
           accent: clanColor(clan),
           icon: "flag",
-          kicker: "New clan",
+          label: "New clan",
           title: clan.name,
         },
         link: { label: "Clan", url: clanUrl(clan) },
@@ -257,7 +256,7 @@ export function buildClanPost(frame: ClanFeedFrame): ClanPost {
     }
     case "alliance_formed": {
       const [a, b] = frame.data;
-      return pair(a, b, `Allied with ${tag(b)}`, "Alliance", "sparkle", "&");
+      return pair(a, b, `Allied with ${tag(b)}!`, "Alliance", "sparkle", "&");
     }
     case "alliance_ended": {
       const [a, b] = frame.data;
@@ -265,7 +264,7 @@ export function buildClanPost(frame: ClanFeedFrame): ClanPost {
     }
     case "rival_declared": {
       const [a, b] = frame.data;
-      return pair(a, b, `Called out ${tag(b)} as a rival`, "Rivalry", "target", "vs");
+      return pair(a, b, `Called out ${tag(b)} as a rival!`, "Rivalry", "target", "vs");
     }
     case "season_closed":
       return seasonClosed(frame.data);
@@ -296,7 +295,7 @@ export class ClanFeed {
       );
 
       await channel.send({
-        content: feedSearchLine([card.header.name], [card.headerTitle], [card.kicker, card.title]),
+        content: feedSearchLine([card.header.name], [card.headerTitle], [card.label, card.title]),
         allowedMentions: { parse: [] },
         files: [new AttachmentBuilder(image, { name: "clan-feed.png" })],
         components: [row],

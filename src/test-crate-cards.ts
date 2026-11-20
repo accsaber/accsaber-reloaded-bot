@@ -19,8 +19,8 @@ const CFG: CrateFeedConfig = {
   rarities: ["legendary", "mythic"],
   postOnModifier: true,
   ignoredModifiers: ["normal", "founders"],
-  messageTemplate: "Got {article} {rarity} {itemType} from {crateName}",
-  unusualSubtitleTemplate: "Unusual roll with the {effectName} effect",
+  messageTemplate: "Pulled {article} {rarity} {itemType} from {crateName}!",
+  unusualSubtitleTemplate: "And it's unusual, with the {effectName} effect!",
 };
 
 const PLAYER_ID = "76561198012241978";

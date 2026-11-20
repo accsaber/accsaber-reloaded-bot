@@ -2,13 +2,17 @@ import { EmbedBuilder } from "discord.js";
 
 export const WEBSITE_URL = "https://accsaber.com";
 
+export function playerUrl(id: string): string {
+  return `${WEBSITE_URL}/players/${id}`;
+}
+
 export const Colors = {
   category: {
     trueAcc: 0x22c55e,
     standardAcc: 0x3b82f6,
     techAcc: 0xef4444,
     lowMid: 0xeab308,
-    overall: 0xa855f7,
+    overall: 0xf5b800,
   },
   semantic: {
     success: 0x22c55e,
@@ -28,7 +32,7 @@ export const Colors = {
     bronze: 0xcd7f32,
     silver: 0xc0c0c0,
     gold: 0xffd700,
-    platinum: 0x4dd9e0,
+    platinum: 0x36cfb0,
     diamond: 0xb9f2ff,
   },
   levelTier: {
@@ -61,13 +65,6 @@ export function successEmbed(title: string, description: string): EmbedBuilder {
 export function errorEmbed(title: string, description: string): EmbedBuilder {
   return new EmbedBuilder()
     .setColor(Colors.semantic.error)
-    .setTitle(title)
-    .setDescription(description);
-}
-
-export function infoEmbed(title: string, description: string): EmbedBuilder {
-  return new EmbedBuilder()
-    .setColor(Colors.semantic.info)
     .setTitle(title)
     .setDescription(description);
 }

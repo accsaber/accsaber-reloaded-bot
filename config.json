@@ -35,114 +35,105 @@
     "reconnectIntervalMs": 5000,
     "firstMilestone": {
       "enabled": true,
-      "embedColor": "#f97316",
       "thresholds": [
         {
           "ap": 700,
           "enabled": true,
-          "messageTemplate": "First 700+ AP score {firstEverLabel}"
+          "messageTemplate": "Broke 700 AP for the first time {firstEverLabel}!"
         },
         {
           "ap": 800,
           "enabled": true,
-          "messageTemplate": "First 800+ AP score {firstEverLabel}"
+          "messageTemplate": "Pushed past 800 AP for the first time {firstEverLabel}!"
         },
         {
           "ap": 900,
           "enabled": true,
-          "messageTemplate": "First 900+ AP score {firstEverLabel}"
+          "messageTemplate": "Cracked 900 AP for the first time {firstEverLabel}!"
         },
         {
           "ap": 1000,
           "enabled": true,
-          "messageTemplate": "First 1000+ AP score {firstEverLabel}"
+          "messageTemplate": "Reached 1000 AP for the first time {firstEverLabel}, that is four digits!"
         },
         {
           "ap": 1100,
           "enabled": true,
-          "messageTemplate": "First 1100+ AP score {firstEverLabel}"
+          "messageTemplate": "Smashed through 1100 AP for the first time {firstEverLabel}!"
         }
       ]
     },
     "allScoresAbove": {
       "enabled": true,
       "apThreshold": 1060,
-      "embedColor": "#38bdf8",
-      "messageTemplate": "Set a {ap} AP score"
+      "messageTemplate": "Just set a massive {ap} AP score!"
     },
     "underdog": {
       "enabled": true,
-      "embedColor": "#22c55e",
       "mapRankThreshold": 5,
       "minCategoryRank": 50,
-      "messageTemplate": "Got #{rank} on this map while being #{categoryRank} in {categoryName}"
+      "messageTemplate": "Snatched #{rank} on this map while ranked #{categoryRank} in {categoryName}!"
     },
     "rankOne": {
       "enabled": true,
-      "embedColor": "#ffd700",
-      "messageTemplate": "Took #1 on this map"
+      "messageTemplate": "Took #1 on this map!"
     },
     "topRank": {
       "enabled": true,
       "categories": [
         {
-          "categoryCode": "overall",
-          "embedColor": "#a855f7"
+          "categoryCode": "overall"
         },
         {
-          "categoryCode": "standard_acc",
-          "embedColor": "#3b82f6"
+          "categoryCode": "standard_acc"
         },
         {
-          "categoryCode": "true_acc",
-          "embedColor": "#22c55e"
+          "categoryCode": "true_acc"
         },
         {
-          "categoryCode": "tech_acc",
-          "embedColor": "#ef4444"
+          "categoryCode": "tech_acc"
         }
       ],
       "detailThreshold": 10,
       "passedThreshold": 50,
-      "detailMessageTemplate": "Now #{categoryRank} in {categoryName}",
-      "detailSubtitleTemplate": "Moved from #{previousRank}{passedInfo}",
+      "detailMessageTemplate": "Climbed to #{categoryRank} in {categoryName}!",
+      "detailSubtitleTemplate": "Up from #{previousRank}{passedInfo}",
       "thresholdSubtitleTemplate": "Now #{categoryRank}{passedInfo}",
       "thresholds": [
         {
           "rank": 10,
           "enabled": true,
-          "messageTemplate": "Entered the top 10 in {categoryName}"
+          "messageTemplate": "Is now a top 10 player in {categoryName}!"
         },
         {
           "rank": 25,
           "enabled": true,
-          "messageTemplate": "Entered the top 25 in {categoryName}"
+          "messageTemplate": "Stormed into the top 25 in {categoryName}!"
         },
         {
           "rank": 50,
           "enabled": true,
-          "messageTemplate": "Entered the top 50 in {categoryName}"
+          "messageTemplate": "Fought their way into the top 50 in {categoryName}!"
         },
         {
           "rank": 100,
           "enabled": true,
-          "messageTemplate": "Entered the top 100 in {categoryName}"
+          "messageTemplate": "Broke into the top 100 in {categoryName}!"
         },
         {
           "rank": 200,
           "enabled": true,
-          "messageTemplate": "Entered the top 200 in {categoryName}"
+          "messageTemplate": "Climbed into the top 200 in {categoryName}!"
         },
         {
           "rank": 300,
           "enabled": true,
-          "messageTemplate": "Entered the top 300 in {categoryName}"
+          "messageTemplate": "Made it into the top 300 in {categoryName}!"
         }
       ]
     },
     "streak": {
       "enabled": true,
-      "embedColor": "#a855f7",
       "categoryThresholds": [
         {
           "categoryCode": "tech_acc",
@@ -157,7 +148,7 @@
           "threshold": 12
         }
       ],
-      "messageTemplate": "Hit a {streak115} note 115 streak"
+      "messageTemplate": "Hit {streak115} 115s in a row!"
     }
   },
   "milestoneFeed": {
@@ -171,27 +162,27 @@
     "rules": {
       "firstCompletion": {
         "enabled": true,
-        "messageTemplate": "First player to unlock this {milestoneType}",
+        "messageTemplate": "The first player ever to unlock this {milestoneType}!",
         "color": "#FFD700"
       },
       "rare": {
         "enabled": true,
         "percentageThreshold": 0.1,
         "minPlayersToCount": 100,
-        "messageTemplate": "Unlocked a rare {milestoneType}",
-        "subtitleTemplate": "{percentage}% of players have it",
+        "messageTemplate": "Unlocked a rare {milestoneType}!",
+        "subtitleTemplate": "Only {percentage}% of players have it",
         "color": "#9B59B6"
       },
       "diamondPlus": {
         "enabled": true,
         "tiers": ["diamond", "apex"],
-        "messageTemplate": "Unlocked a {tier} {milestoneType}",
+        "messageTemplate": "Unlocked a {tier} {milestoneType}!",
         "color": "#5DADE2"
       }
     },
     "setCompletion": {
       "enabled": true,
-      "messageTemplate": "Completed a milestone set",
+      "messageTemplate": "Completed a whole milestone set!",
       "color": "#ec4899"
     }
   },
@@ -200,7 +191,7 @@
     "channelId": "1509851271635406898",
     "wsUrl": null,
     "bands": ["extreme"],
-    "messageTemplate": "Completed an extreme {pool} mission",
+    "messageTemplate": "Beat an extreme {pool} mission!",
     "maxCompletedAgeSeconds": 600
   },
   "crateFeed": {
@@ -210,8 +201,8 @@
     "rarities": ["legendary", "mythic"],
     "postOnModifier": true,
     "ignoredModifiers": ["normal", "founders"],
-    "messageTemplate": "Got {article} {rarity} {itemType} from {crateName}",
-    "unusualSubtitleTemplate": "Unusual roll with the {effectName} effect",
+    "messageTemplate": "Pulled {article} {rarity} {itemType} from {crateName}!",
+    "unusualSubtitleTemplate": "And it's unusual, with the {effectName} effect!",
     "maxOpenAgeSeconds": 600
   },
   "campaignFeed": {
@@ -224,18 +215,18 @@
         "enabled": true,
         "campaignSlug": "acc-champ-community-campaign",
         "labels": ["Mercenary", "Acc Champ", "Elder", "God", "Celestial"],
-        "messageTemplate": "Earned a seal in {campaignName}",
+        "messageTemplate": "Earned a seal in {campaignName}!",
         "color": "#f59e0b"
       },
       "milestone": {
         "enabled": true,
         "ignoredLabels": ["start"],
-        "messageTemplate": "Hit a checkpoint in {campaignName}",
+        "messageTemplate": "Hit a checkpoint in {campaignName}!",
         "color": "#a855f7"
       },
       "completion": {
         "enabled": true,
-        "messageTemplate": "Finished a campaign by {creatorName}",
+        "messageTemplate": "Finished a whole campaign by {creatorName}!",
         "color": "#22c55e"
       }
     }

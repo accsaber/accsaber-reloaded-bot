@@ -1,4 +1,4 @@
-import { hexWithAlpha, type Ctx } from "./canvas-utils.js";
+import type { Ctx } from "./canvas-utils.js";
 
 type IconDraw = (ctx: Ctx, s: number) => void;
 
@@ -301,6 +301,134 @@ function drawGeneric(ctx: Ctx, s: number): void {
   ctx.globalAlpha = 1;
 }
 
+function drawFlag(ctx: Ctx, s: number): void {
+  ctx.lineWidth = 2.2 * s;
+
+  ctx.beginPath();
+  ctx.moveTo(4 * s, 15 * s);
+  ctx.bezierCurveTo(4 * s, 15 * s, 5 * s, 14 * s, 8 * s, 14 * s);
+  ctx.bezierCurveTo(11 * s, 14 * s, 13 * s, 16 * s, 16 * s, 16 * s);
+  ctx.bezierCurveTo(19 * s, 16 * s, 20 * s, 15 * s, 20 * s, 15 * s);
+  ctx.lineTo(20 * s, 3 * s);
+  ctx.bezierCurveTo(20 * s, 3 * s, 19 * s, 4 * s, 16 * s, 4 * s);
+  ctx.bezierCurveTo(13 * s, 4 * s, 11 * s, 2 * s, 8 * s, 2 * s);
+  ctx.bezierCurveTo(5 * s, 2 * s, 4 * s, 3 * s, 4 * s, 3 * s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(4 * s, 22 * s);
+  ctx.lineTo(4 * s, 15 * s);
+  ctx.stroke();
+}
+
+function drawTrophy(ctx: Ctx, s: number): void {
+  ctx.lineWidth = 2 * s;
+
+  ctx.beginPath();
+  ctx.moveTo(6 * s, 2 * s);
+  ctx.lineTo(18 * s, 2 * s);
+  ctx.lineTo(18 * s, 9 * s);
+  ctx.bezierCurveTo(18 * s, 12.3 * s, 15.3 * s, 15 * s, 12 * s, 15 * s);
+  ctx.bezierCurveTo(8.7 * s, 15 * s, 6 * s, 12.3 * s, 6 * s, 9 * s);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(6 * s, 4 * s);
+  ctx.lineTo(4.5 * s, 4 * s);
+  ctx.bezierCurveTo(3.1 * s, 4 * s, 2 * s, 5.1 * s, 2 * s, 6.5 * s);
+  ctx.bezierCurveTo(2 * s, 7.9 * s, 3.1 * s, 9 * s, 4.5 * s, 9 * s);
+  ctx.lineTo(6 * s, 9 * s);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(18 * s, 4 * s);
+  ctx.lineTo(19.5 * s, 4 * s);
+  ctx.bezierCurveTo(20.9 * s, 4 * s, 22 * s, 5.1 * s, 22 * s, 6.5 * s);
+  ctx.bezierCurveTo(22 * s, 7.9 * s, 20.9 * s, 9 * s, 19.5 * s, 9 * s);
+  ctx.lineTo(18 * s, 9 * s);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(10 * s, 14.66 * s);
+  ctx.lineTo(10 * s, 17 * s);
+  ctx.bezierCurveTo(10 * s, 17.55 * s, 9.53 * s, 17.98 * s, 9.03 * s, 18.21 * s);
+  ctx.bezierCurveTo(7.85 * s, 18.75 * s, 7 * s, 20.24 * s, 7 * s, 22 * s);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(14 * s, 14.66 * s);
+  ctx.lineTo(14 * s, 17 * s);
+  ctx.bezierCurveTo(14 * s, 17.55 * s, 14.47 * s, 17.98 * s, 14.97 * s, 18.21 * s);
+  ctx.bezierCurveTo(16.15 * s, 18.75 * s, 17 * s, 20.24 * s, 17 * s, 22 * s);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(4 * s, 22 * s);
+  ctx.lineTo(20 * s, 22 * s);
+  ctx.stroke();
+}
+
+function drawStack(ctx: Ctx, s: number): void {
+  ctx.lineWidth = 1.2 * s;
+
+  const plateW = 17 * s;
+  const plateH = 3.6 * s;
+  const radius = 1.6 * s;
+  const xStart = 3.5 * s;
+  const ys = [4.5 * s, 10.2 * s, 15.9 * s];
+
+  for (let i = 0; i < ys.length; i++) {
+    ctx.globalAlpha = i === 0 ? 0.6 : i === 1 ? 0.82 : 1;
+    ctx.beginPath();
+    ctx.roundRect(xStart, ys[i], plateW, plateH, radius);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.beginPath();
+  ctx.moveTo(xStart + 0.5 * s, ys[2] + plateH + 2 * s);
+  ctx.lineTo(xStart + plateW - 0.5 * s, ys[2] + plateH + 2 * s);
+  ctx.stroke();
+}
+
+function drawTarget(ctx: Ctx, s: number): void {
+  ctx.lineWidth = 2 * s;
+  ctx.beginPath();
+  ctx.arc(12 * s, 12 * s, 10 * s, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.lineWidth = 1.8 * s;
+  ctx.beginPath();
+  ctx.arc(12 * s, 12 * s, 6.5 * s, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(12 * s, 12 * s, 2.6 * s, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawSparkle(ctx: Ctx, s: number): void {
+  const star = (cx: number, cy: number, r: number, waist: number) => {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r);
+    ctx.quadraticCurveTo(cx + waist, cy - waist, cx + r, cy);
+    ctx.quadraticCurveTo(cx + waist, cy + waist, cx, cy + r);
+    ctx.quadraticCurveTo(cx - waist, cy + waist, cx - r, cy);
+    ctx.quadraticCurveTo(cx - waist, cy - waist, cx, cy - r);
+    ctx.closePath();
+    ctx.fill();
+  };
+
+  star(11 * s, 11 * s, 9 * s, 1.6 * s);
+  ctx.globalAlpha = 0.75;
+  star(19 * s, 18.5 * s, 4.5 * s, 0.8 * s);
+  ctx.globalAlpha = 1;
+}
+
 const ICONS: Record<string, IconDraw> = {
   crate: drawCrate,
   badge: drawBadge,
@@ -314,29 +442,20 @@ const ICONS: Record<string, IconDraw> = {
   profile_border_color: drawBorderColor,
   profile_background: drawBackground,
   profile_thumbnail_background: drawThumbnail,
+  flag: drawFlag,
+  trophy: drawTrophy,
+  stack: drawStack,
+  target: drawTarget,
+  sparkle: drawSparkle,
 };
 
-export function drawItemTypeIcon(
-  ctx: Ctx,
-  x: number,
-  y: number,
-  size: number,
-  typeKey: string,
-  color: string,
-  glow: { color: string; blur: number } | null = null
-): void {
-  const draw = ICONS[typeKey] ?? drawGeneric;
-
+export function drawIcon(ctx: Ctx, key: string, x: number, y: number, size: number, color: string): void {
   ctx.save();
   ctx.translate(x, y);
-  if (glow) {
-    ctx.shadowColor = hexWithAlpha(glow.color, 0.75);
-    ctx.shadowBlur = glow.blur;
-  }
   ctx.fillStyle = color;
   ctx.strokeStyle = color;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  draw(ctx, size / 24);
+  (ICONS[key] ?? drawGeneric)(ctx, size / 24);
   ctx.restore();
 }

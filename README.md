@@ -1,6 +1,6 @@
 # Arbot
 
-Discord bot for AccSaber Reloaded. Links player profiles, assigns level-based roles, and surfaces platform data.
+Discord bot for AccSaber. Links player profiles, assigns level-based roles, and surfaces platform data.
 
 ## Requirements
 

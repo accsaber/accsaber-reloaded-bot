@@ -1,22 +1,9 @@
 import type { MissionBand, MissionPool, MissionType } from "../types/api.js";
-import {
-  CATEGORY_HEX,
-  FEED_BODY_TOP,
-  FEED_LEFT,
-  drawBigValue,
-  drawBody,
-  drawTargetIcon,
-  numberFmt,
-  openFeedCard,
-} from "./canvas-utils.js";
+import { type CardResult, type CardUser, CATEGORY_HEX, TEXT_PRIMARY, drawBody, numberFmt, openFeedCard } from "./canvas-utils.js";
+import { playerUrl } from "./embeds.js";
 
 export interface MissionCardData {
-  user: {
-    id: string;
-    name: string;
-    country?: string;
-    avatarUrl?: string;
-  };
+  user: CardUser;
   mission: {
     id: string;
     name: string;
@@ -31,11 +18,6 @@ export interface MissionCardData {
   level?: number;
 }
 
-export interface MissionCardResult {
-  image: Buffer;
-  profileUrl: string;
-}
-
 export const BAND_LABEL: Record<MissionBand, string> = {
   easy: "Easy",
   medium: "Medium",
@@ -45,28 +27,24 @@ export const BAND_LABEL: Record<MissionBand, string> = {
 
 export async function renderMissionCard(
   data: MissionCardData
-): Promise<MissionCardResult> {
+): Promise<CardResult> {
   const { user, mission } = data;
   const accent = CATEGORY_HEX[data.category?.code ?? "overall"] ?? CATEGORY_HEX.overall;
 
-  const { ctx, finish } = await openFeedCard(210, {
+  const { ctx, finish } = await openFeedCard({
     user,
     level: data.level,
     title: data.title,
     titleColor: accent,
-    chips: data.category ? [{ label: data.category.name, color: accent }] : [],
-    wash: accent,
-    washAlpha: 0.18,
   });
-
-  drawTargetIcon(ctx, FEED_LEFT, FEED_BODY_TOP, 56, accent, {
-    color: accent,
-    blur: mission.band === "extreme" ? 24 : 14,
-  });
-  drawBody(ctx, BAND_LABEL[mission.band] ?? mission.band, accent, mission.name, mission.description);
 
   const xp = mission.xpAwarded ?? 0;
-  if (xp > 0) drawBigValue(ctx, FEED_LEFT, FEED_BODY_TOP + 70, numberFmt(xp, 0), "XP", accent);
+  const bottom = drawBody(ctx, {
+    art: { img: null, icon: "target", color: accent },
+    title: mission.name,
+    description: mission.description,
+    lines: [[xp > 0 && { text: `${numberFmt(xp, 0)} XP`, color: TEXT_PRIMARY }]],
+  });
 
-  return { image: await finish(), profileUrl: `https://accsaber.com/players/${user.id}` };
+  return { image: finish(bottom), profileUrl: playerUrl(user.id) };
 }

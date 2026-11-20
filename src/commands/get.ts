@@ -142,7 +142,7 @@ const get: Command = {
       stats: categoryStats,
       diff,
       topScores: scores?.content ?? [],
-      scoresLabel: mode === "recent" ? "RECENT SCORES" : "TOP SCORES",
+      scoresLabel: mode === "recent" ? "Recent Scores" : "Top Scores",
       categoryIdToCode,
     });
 

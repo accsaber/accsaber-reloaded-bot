@@ -14,7 +14,7 @@ import { config } from "../config.js";
 import { feedChannel } from "./feed.js";
 import type { ScoreResponse, UserCategoryStatisticsResponse } from "../types/api.js";
 import type { ScoreFeedConfig, TopRankCategoryConfig } from "../types/config.js";
-import { CATEGORY_HEX, formatDifficulty } from "../utils/canvas-utils.js";
+import { formatDifficulty } from "../utils/canvas-utils.js";
 import { renderFeedCard, type FeedCardData } from "../utils/feed-card-renderer.js";
 import { feedSearchLine, renderTemplate } from "../utils/templates.js";
 
@@ -255,9 +255,7 @@ export class ScoreFeed {
       return {
         score,
         title: renderTemplate(overallMatched.messageTemplate, vars),
-        accentColor: overallMatched.embedColor ?? firstMilestone.embedColor,
         categoryCode: category.code,
-        categoryName: category.name,
       };
     }
 
@@ -279,9 +277,7 @@ export class ScoreFeed {
     return {
       score,
       title: renderTemplate(catMatched.messageTemplate, vars),
-      accentColor: catMatched.embedColor ?? firstMilestone.embedColor,
       categoryCode: category.code,
-      categoryName: category.name,
     };
   }
 
@@ -312,9 +308,7 @@ export class ScoreFeed {
     return {
       score,
       title: renderTemplate(allScoresAbove.messageTemplate, vars),
-      accentColor: allScoresAbove.embedColor,
       categoryCode: category.code,
-      categoryName: category.name,
     };
   }
 
@@ -337,9 +331,7 @@ export class ScoreFeed {
     return {
       score,
       title: renderTemplate(underdog.messageTemplate, vars),
-      accentColor: underdog.embedColor,
       categoryCode: category.code,
-      categoryName: category.name,
     };
   }
 
@@ -367,9 +359,7 @@ export class ScoreFeed {
     return {
       score,
       title: renderTemplate(this.cfg.rankOne.messageTemplate, vars),
-      accentColor: this.cfg.rankOne.embedColor,
       categoryCode: category.code,
-      categoryName: category.name,
       extraInfo,
     };
   }
@@ -416,7 +406,6 @@ export class ScoreFeed {
     const catName = catConfig.categoryCode === "overall"
       ? "Overall"
       : (await getCategoryNameById(stats.categoryId)) ?? catConfig.categoryCode;
-    const accent = catConfig.embedColor ?? CATEGORY_HEX[catConfig.categoryCode] ?? CATEGORY_HEX.overall;
     const isDetail = currentRank <= topRank.detailThreshold;
     const showPassed = currentRank <= topRank.passedThreshold;
 
@@ -425,9 +414,9 @@ export class ScoreFeed {
       try {
         const passed = await getCategoryLeaderboardAt(stats.categoryId, currentRank + 1);
         if (passed && passed.userId !== score.userId) {
-          passedInfo = ` - Passed ${passed.userName}`;
+          passedInfo = ` and passed ${passed.userName}`;
         }
-      } catch { /* skip */ }
+      } catch {}
     }
 
     const subtitleVars = {
@@ -452,9 +441,7 @@ export class ScoreFeed {
       return {
         score,
         title: renderTemplate(topRank.detailMessageTemplate, vars),
-        accentColor: accent,
         categoryCode: catConfig.categoryCode,
-        categoryName: catName,
         subtitle: renderTemplate(topRank.detailSubtitleTemplate, subtitleVars),
       };
     }
@@ -489,9 +476,7 @@ export class ScoreFeed {
     return {
       score,
       title: renderTemplate(best.messageTemplate, vars),
-      accentColor: accent,
       categoryCode: catConfig.categoryCode,
-      categoryName: catName,
       subtitle: showPassed ? renderTemplate(topRank.thresholdSubtitleTemplate, subtitleVars) : undefined,
     };
   }
@@ -514,9 +499,7 @@ export class ScoreFeed {
     return {
       score,
       title: renderTemplate(streak.messageTemplate, vars),
-      accentColor: streak.embedColor,
       categoryCode: category.code,
-      categoryName: category.name,
     };
   }
 }

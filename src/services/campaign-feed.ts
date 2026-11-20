@@ -34,6 +34,7 @@ import {
   needsProgressLookup,
   type MilestoneCandidate,
 } from "./campaign-rules.js";
+import { WEBSITE_URL } from "../utils/embeds.js";
 import { feedSearchLine } from "../utils/templates.js";
 
 const DEFAULT_MAX_AGE_SEC = 600;
@@ -163,7 +164,7 @@ export class CampaignFeed {
         new ButtonBuilder()
           .setLabel("Campaign")
           .setStyle(ButtonStyle.Link)
-          .setURL(`https://accsaber.com/campaigns/${card.campaign.slug}`),
+          .setURL(`${WEBSITE_URL}/campaigns/${card.campaign.slug}`),
         new ButtonBuilder()
           .setLabel("Profile")
           .setStyle(ButtonStyle.Link)

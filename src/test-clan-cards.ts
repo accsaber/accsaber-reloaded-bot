@@ -138,22 +138,22 @@ const posts = frames.map(({ raw }) => {
 });
 
 const [declared, atkWon, defWon, drawn, , , , broke, founded, , , , season] = posts.map((p) => p.card);
-assert.equal(declared.headerTitle, "Declared war on [AK]");
+assert.equal(declared.headerTitle, "Declared war on [AK]!");
 assert.equal(declared.accent, "#ff2e92");
 assert.equal(declared.value?.amount, 1499.6);
 assert.equal(posts[0].link.url, "https://accsaber.com/clans/wars/w1");
-assert.equal(atkWon.headerTitle, "Defeated [AK]");
+assert.equal(atkWon.headerTitle, "Defeated [AK]!");
 assert.equal(defWon.accent, "#3b82f6");
 assert.equal(drawn.accent, "#6b7280");
 assert.ok(drawn.description?.includes("[AK] 0 stake left"));
-assert.equal(broke.headerTitle, "Broke under_score's guard");
+assert.equal(broke.headerTitle, "Broke under_score's guard!");
 assert.equal(broke.coverUrl, "https://cdn.example.com/cover.jpg");
 assert.ok(broke.description?.includes("Expert+"));
 assert.equal(founded.header.name, "[NB] Neon Blades");
 assert.equal(posts[8].link.url, "https://accsaber.com/clans/neon-blades");
 assert.equal(season.header.name, "[NB] Neon Blades");
 assert.equal(season.value?.amount, 12345.5);
-assert.equal(season.description, "#2 [AK] Acc [Kings] - 9,000 · #3 [AK] Acc [Kings] - 100");
+assert.equal(season.description, "#2 [AK] Acc [Kings] 9,000, #3 [AK] Acc [Kings] 100");
 
 console.log("clan feed checks passed");
 

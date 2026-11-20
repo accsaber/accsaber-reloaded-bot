@@ -1,21 +1,11 @@
 import type { MilestoneTier, MilestoneType } from "../types/api.js";
-import {
-  CATEGORY_HEX,
-  FEED_BODY_TOP,
-  FEED_LEFT,
-  drawBigValue,
-  drawBody,
-  drawFlagIcon,
-  drawStackIcon,
-  drawTrophyIcon,
-  numberFmt,
-  openFeedCard,
-} from "./canvas-utils.js";
+import { type CardResult, type CardUser, TEXT_PRIMARY, drawBody, numberFmt, openFeedCard } from "./canvas-utils.js";
+import { playerUrl } from "./embeds.js";
 
 export type MilestoneTriggerKind = "first" | "rare" | "diamond_plus";
 
 export interface MilestoneSetCardData {
-  user: { id: string; name: string; country: string | null; avatarUrl: string | null };
+  user: CardUser;
   set: {
     id: string;
     title: string;
@@ -29,7 +19,7 @@ export interface MilestoneSetCardData {
 }
 
 export interface MilestoneCardData {
-  user: { id: string; name: string; country: string | null; avatarUrl: string | null };
+  user: CardUser;
   milestone: {
     id: string;
     title: string;
@@ -47,18 +37,13 @@ export interface MilestoneCardData {
   level?: number;
 }
 
-export interface MilestoneCardResult {
-  image: Buffer;
-  profileUrl: string;
-}
-
-export const TIER_HEX: Record<MilestoneTier, string> = {
+const TIER_HEX: Record<MilestoneTier, string> = {
   bronze: "#cd7f32",
   silver: "#c0c0c0",
   gold: "#ffd700",
-  platinum: "#4dd9e0",
+  platinum: "#36cfb0",
   diamond: "#b9f2ff",
-  apex: "#ff2e92",
+  apex: "#a855f7",
 };
 
 export const TIER_LABEL: Record<MilestoneTier, string> = {
@@ -70,58 +55,54 @@ export const TIER_LABEL: Record<MilestoneTier, string> = {
   apex: "Apex",
 };
 
-const STRONG_GLOW_TIERS: Set<MilestoneTier> = new Set(["diamond", "apex"]);
-
 export async function renderMilestoneCard(
   data: MilestoneCardData
-): Promise<MilestoneCardResult> {
+): Promise<CardResult> {
   const { user, milestone } = data;
   const tierHex = TIER_HEX[milestone.tier];
-  const washColor = data.category
-    ? CATEGORY_HEX[data.category.code] ?? CATEGORY_HEX.overall
-    : tierHex;
 
-  const { ctx, finish } = await openFeedCard(210, {
+  const { ctx, finish } = await openFeedCard({
     user,
     level: data.level,
     title: data.title,
     titleColor: data.accentColor,
     subtitle: data.subtitle,
-    chips: data.category
-      ? [{ label: data.category.name, color: CATEGORY_HEX[data.category.code] ?? CATEGORY_HEX.overall }]
-      : [],
-    wash: washColor,
   });
 
-  const drawIcon = milestone.type === "achievement" ? drawTrophyIcon : drawFlagIcon;
-  drawIcon(ctx, FEED_LEFT, FEED_BODY_TOP, 56, tierHex, {
-    color: tierHex,
-    blur: STRONG_GLOW_TIERS.has(milestone.tier) ? 26 : 14,
+  const bottom = drawBody(ctx, {
+    art: { img: null, icon: milestone.type === "achievement" ? "trophy" : "flag", color: tierHex },
+    title: milestone.title,
+    description: milestone.description,
+    lines: [
+      [
+        data.trigger !== "diamond_plus" && { text: TIER_LABEL[milestone.tier], color: tierHex },
+        { text: `${numberFmt(milestone.xp, 0)} XP`, color: TEXT_PRIMARY },
+      ],
+    ],
   });
-  drawBody(ctx, TIER_LABEL[milestone.tier], tierHex, milestone.title, milestone.description);
-  drawBigValue(ctx, FEED_LEFT, FEED_BODY_TOP + 70, numberFmt(milestone.xp, 0), "XP", washColor);
 
-  return { image: await finish(), profileUrl: `https://accsaber.com/players/${user.id}` };
+  return { image: finish(bottom), profileUrl: playerUrl(user.id) };
 }
 
 export async function renderMilestoneSetCard(
   data: MilestoneSetCardData
-): Promise<MilestoneCardResult> {
+): Promise<CardResult> {
   const { user, set, accentColor } = data;
 
-  const { ctx, finish } = await openFeedCard(210, {
+  const { ctx, finish } = await openFeedCard({
     user,
     level: data.level,
     title: data.title,
     titleColor: accentColor,
     subtitle: data.subtitle,
-    wash: accentColor,
-    washAlpha: 0.18,
   });
 
-  drawStackIcon(ctx, FEED_LEFT, FEED_BODY_TOP, 56, accentColor, { color: accentColor, blur: 26 });
-  drawBody(ctx, "Milestone set", accentColor, set.title, set.description);
-  drawBigValue(ctx, FEED_LEFT, FEED_BODY_TOP + 70, numberFmt(set.bonusXp, 0), "BONUS XP", accentColor);
+  const bottom = drawBody(ctx, {
+    art: { img: null, icon: "stack", color: accentColor },
+    title: set.title,
+    description: set.description,
+    lines: [[{ text: `${numberFmt(set.bonusXp, 0)} bonus XP`, color: TEXT_PRIMARY }]],
+  });
 
-  return { image: await finish(), profileUrl: `https://accsaber.com/players/${user.id}` };
+  return { image: finish(bottom), profileUrl: playerUrl(user.id) };
 }

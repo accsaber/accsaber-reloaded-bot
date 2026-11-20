@@ -1,4 +1,3 @@
-import type { Guild } from "discord.js";
 import { ApiError } from "../api/client.js";
 import { getDiscordLink } from "../api/discord-links.js";
 import {
