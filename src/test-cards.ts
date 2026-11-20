@@ -52,6 +52,7 @@ const cards: { name: string; data: FeedCardData }[] = [
     data: {
       score: mock({ rank: 1, ap: 1003.74, accuracy: 0.9930, streak115: 9 }),
       title: "Took #1 on this map!",
+      loud: true,
       accentColor: "#ffd700",
       categoryCode: "standard_acc",
       categoryName: "Standard Acc",
@@ -77,6 +78,7 @@ const cards: { name: string; data: FeedCardData }[] = [
     data: {
       score: mock({ rank: 5, ap: 1003.74, accuracy: 0.9930, streak115: 7 }),
       title: "Reached 1000 AP for the first time ever, that is four digits!",
+      loud: true,
       accentColor: "#ffd700",
       categoryCode: "standard_acc",
       categoryName: "Standard Acc",

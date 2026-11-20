@@ -27,7 +27,6 @@ import {
   renderMilestoneSetCard,
   type MilestoneCardData,
   type MilestoneSetCardData,
-  type MilestoneTriggerKind,
   TIER_LABEL,
 } from "../utils/milestone-card-renderer.js";
 import { feedSearchLine, renderTemplate } from "../utils/templates.js";
@@ -50,6 +49,8 @@ const DEDUPE_TTL_MS = 24 * 60 * 60 * 1000;
 interface DedupeEntry {
   expiresAt: number;
 }
+
+type MilestoneTriggerKind = "first" | "rare" | "diamond_plus";
 
 interface TriggerResult {
   kind: MilestoneTriggerKind;
@@ -316,7 +317,6 @@ export class MilestoneFeed {
         avatarUrl: payload.player.cdnAvatarUrl ?? payload.player.avatarUrl ?? null,
       },
       set: {
-        id: set.id,
         title: set.title,
         description: set.description,
         bonusXp: set.bonusXp,
@@ -349,15 +349,12 @@ export class MilestoneFeed {
         avatarUrl: payload.player.cdnAvatarUrl ?? payload.player.avatarUrl ?? null,
       },
       milestone: {
-        id: milestone.id,
         title: milestone.title,
         description: milestone.description,
-        type: milestone.type,
         tier: milestone.tier,
+        iconGroup: milestone.iconGroup,
         xp: milestone.xp,
-        categoryId: milestone.categoryId ?? undefined,
       },
-      trigger: trigger.kind,
       title: trigger.title,
       subtitle: trigger.subtitle,
       accentColor: trigger.color,

@@ -165,6 +165,7 @@ export interface MilestonePayloadEntry {
   description: string;
   type: MilestoneType;
   tier: MilestoneTier;
+  iconGroup?: string;
   xp: number;
 }
 

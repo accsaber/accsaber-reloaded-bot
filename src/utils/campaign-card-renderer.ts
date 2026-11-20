@@ -39,12 +39,9 @@ interface CampaignCardNode {
   mapAuthor: string;
   coverUrl?: string | null;
   difficulty: string;
-  characteristic: string;
   modifiers: string[];
   objectives: CampaignCardObjective[];
   objectiveMode: CampaignTargetMode;
-  complexity?: number | null;
-  nps?: number | null;
 }
 
 interface CampaignCardMilestone {
@@ -222,13 +219,13 @@ export async function renderCampaignCard(
 
   let bottom = drawBody(ctx, {
     art: { ...art, icon: data.kind === "milestone" ? "flag" : "trophy", color: accent },
-    artSize: 88,
+    loud: true,
     title: data.kind === "milestone" ? (milestone?.label ?? campaign.name) : campaign.name,
+    reward: !!reward?.xp && { text: `+${numberFmt(reward.xp, 0)} XP`, color: accent },
     description: data.kind === "completion" ? campaign.summary : null,
     lines: [
       ...lines,
       [
-        !!reward?.xp && { text: `+${numberFmt(reward.xp, 0)} XP`, color: accent },
         ...(reward?.items ?? []).map((item) => ({
           text: item.quantity > 1 ? `${item.name} ×${item.quantity}` : item.name,
           color: TEXT_PRIMARY,

@@ -65,14 +65,19 @@ registerFonts();
 export type Ctx = ReturnType<ReturnType<typeof createCanvas>["getContext"]>;
 export type Img = Awaited<ReturnType<typeof loadImage>>;
 
-export async function loadOptionalImage(url: string | null | undefined): Promise<Img | null> {
-  if (!url) return null;
-  try {
-    const res = await fetch(url);
-    return await loadImage(Buffer.from(await res.arrayBuffer()));
-  } catch {
-    return null;
+const loading = new Map<string, Promise<Img | null>>();
+
+export function loadOptionalImage(url: string | null | undefined): Promise<Img | null> {
+  if (!url) return Promise.resolve(null);
+  let pending = loading.get(url);
+  if (!pending) {
+    pending = fetch(url)
+      .then(async (res) => loadImage(Buffer.from(await res.arrayBuffer())))
+      .catch(() => null)
+      .finally(() => loading.delete(url));
+    loading.set(url, pending);
   }
+  return pending;
 }
 
 export function numberFmt(n: number, decimals: number): string {
@@ -218,7 +223,7 @@ interface LineStyle {
   align?: "left" | "right";
 }
 
-export function drawLine(ctx: Ctx, x: number, y: number, line: Line, style: LineStyle): void {
+export function drawLine(ctx: Ctx, x: number, y: number, line: Line, style: LineStyle): number {
   const gap = style.gap ?? 10;
   let room = style.maxWidth ?? Infinity;
   const parts: { seg: Segment; font: string; text: string; width: number }[] = [];
@@ -242,27 +247,25 @@ export function drawLine(ctx: Ctx, x: number, y: number, line: Line, style: Line
     cursor += part.width + gap;
   }
   ctx.textBaseline = "top";
+  return total;
+}
+
+export function mixHex(a: string, b: string, t: number): string {
+  const channel = (hex: string, i: number) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
+  return `#${[0, 1, 2].map((i) => Math.round(channel(a, i) * t + channel(b, i) * (1 - t)).toString(16).padStart(2, "0")).join("")}`;
 }
 
 const PAD = 24;
 const AVATAR = 48;
 const ART_GAP = 16;
 const BACKDROP_W = 320;
+const BACKDROP_ALPHA = 0.3;
 const MAX_H = 600;
 const BODY_TOP = PAD + AVATAR + 16;
-
 const FEED_W = 600;
+
 export const FEED_LEFT = PAD;
 export const FEED_RIGHT = FEED_W - PAD;
-
-interface FeedShell {
-  user: Omit<CardUser, "id">;
-  level?: number;
-  title: string;
-  titleColor: string;
-  subtitle?: string;
-  backdropUrl?: string | null;
-}
 
 export interface CardUser {
   id: string;
@@ -276,29 +279,48 @@ export interface CardResult {
   profileUrl: string;
 }
 
+export type ArtPainter = (ctx: Ctx, x: number, y: number, size: number) => void;
+
+interface FeedShell {
+  user: Omit<CardUser, "id">;
+  level?: number;
+  title: string;
+  titleColor: string;
+  subtitle?: string;
+  backdropUrl?: string | null;
+  backdropArt?: ArtPainter;
+}
+
 export interface FeedArt {
   img: Img | null;
   fit?: "cover" | "contain";
   icon?: string;
   color?: string;
+  paint?: ArtPainter;
 }
 
 interface FeedBody {
   art?: FeedArt;
-  artSize?: number;
+  loud?: boolean;
   title: string | Line;
+  reward?: Segment | null | false;
   description?: string | null;
   lines?: Line[];
 }
 
-function drawBackdrop(ctx: Ctx, img: Img, h: number): void {
+function drawBackdrop(ctx: Ctx, h: number, img: Img | null, art?: ArtPainter): void {
   const band = createCanvas(BACKDROP_W, h);
   const b = band.getContext("2d");
-  const scale = Math.max(BACKDROP_W / img.width, h / img.height);
-  b.drawImage(img, (BACKDROP_W - img.width * scale) / 2, (h - img.height * scale) / 2, img.width * scale, img.height * scale);
+  if (img) {
+    const scale = Math.max(BACKDROP_W / img.width, h / img.height);
+    b.drawImage(img, (BACKDROP_W - img.width * scale) / 2, (h - img.height * scale) / 2, img.width * scale, img.height * scale);
+  } else if (art) {
+    const size = h * 1.5;
+    art(b, BACKDROP_W - size * 0.82, (h - size) / 2, size);
+  }
   const fade = b.createLinearGradient(0, 0, BACKDROP_W, 0);
   fade.addColorStop(0, "rgba(0, 0, 0, 0)");
-  fade.addColorStop(1, "rgba(0, 0, 0, 0.3)");
+  fade.addColorStop(1, `rgba(0, 0, 0, ${BACKDROP_ALPHA})`);
   b.globalCompositeOperation = "destination-in";
   b.fillStyle = fade;
   b.fillRect(0, 0, BACKDROP_W, h);
@@ -319,13 +341,13 @@ export async function openFeedCard(
 
   const textX = FEED_LEFT + AVATAR + 14;
   const maxWidth = FEED_RIGHT - textX;
-  drawLine(
-    ctx,
-    textX,
-    PAD,
-    [{ text: shell.user.name, color: TEXT_PRIMARY }, flagSegment(shell.user.country, 15)],
-    { size: 17, weight: 700, family: SANS, gap: 8, maxWidth }
-  );
+  drawLine(ctx, textX, PAD, [{ text: shell.user.name, color: TEXT_PRIMARY }, flagSegment(shell.user.country, 15)], {
+    size: 17,
+    weight: 700,
+    family: SANS,
+    gap: 8,
+    maxWidth,
+  });
   drawLine(ctx, textX, PAD + 23, [{ text: shell.title, color: shell.titleColor }], { size: 13, weight: 600, family: SANS, maxWidth });
   drawLine(ctx, textX, PAD + 41, [{ text: shell.subtitle ?? "" }], { size: 12, family: SANS, maxWidth });
 
@@ -335,7 +357,7 @@ export async function openFeedCard(
     const o = out.getContext("2d");
     o.fillStyle = BG_SURFACE;
     o.fillRect(0, 0, FEED_W, h);
-    if (backdrop) drawBackdrop(o, backdrop, h);
+    if (backdrop || shell.backdropArt) drawBackdrop(o, h, backdrop, shell.backdropArt);
     o.drawImage(content, 0, 0);
     return out.toBuffer("image/png");
   };
@@ -343,43 +365,54 @@ export async function openFeedCard(
   return { ctx, finish };
 }
 
-export function drawBody(ctx: Ctx, body: FeedBody): number {
-  const size = body.artSize ?? 56;
-  const art = body.art;
-  if (art?.img && art.fit === "contain") {
+function drawArt(ctx: Ctx, art: FeedArt, size: number): void {
+  if (art.paint) {
+    art.paint(ctx, FEED_LEFT, BODY_TOP, size);
+  } else if (art.img && art.fit === "contain") {
     const scale = Math.min(size / art.img.width, size / art.img.height);
     const w = art.img.width * scale;
     const h = art.img.height * scale;
     ctx.drawImage(art.img, FEED_LEFT + (size - w) / 2, BODY_TOP + (size - h) / 2, w, h);
-  } else if (art && !art.img && art.icon) {
+  } else if (!art.img && art.icon) {
     drawIcon(ctx, art.icon, FEED_LEFT, BODY_TOP, size, art.color ?? TEXT_SECONDARY);
-  } else if (art) {
+  } else {
     drawImageBox(ctx, art.img, FEED_LEFT, BODY_TOP, size, 4);
   }
+}
 
-  const x = art ? FEED_LEFT + size + ART_GAP : FEED_LEFT;
+export function drawBody(ctx: Ctx, body: FeedBody): number {
+  const size = body.loud ? 80 : 56;
+  const titleSize = body.loud ? 22 : 18;
+  const titleH = titleSize + 9;
+  if (body.art) drawArt(ctx, body.art, size);
+
+  const x = body.art ? FEED_LEFT + size + ART_GAP : FEED_LEFT;
   const maxWidth = FEED_RIGHT - x;
-  let y = BODY_TOP;
+  ctx.font = `400 13px ${SANS}`;
+  const description = body.description ? wrapText(ctx, body.description, maxWidth, 2) : [];
+  const lines = (body.lines ?? []).filter((line) => line.some((seg) => seg && seg.text));
+  const textH = titleH + (description.length ? description.length * 17 + 5 : 0) + lines.length * 21 - 4;
+  let y = BODY_TOP + (body.art ? Math.max(0, (size - textH) / 2) : 0);
 
+  const reward = body.reward
+    ? drawLine(ctx, FEED_RIGHT, y, [body.reward], { size: titleSize, weight: 700, align: "right" }) + 16
+    : 0;
   const title = typeof body.title === "string" ? [{ text: body.title }] : body.title;
-  drawLine(ctx, x, y, title, { size: 18, weight: 700, family: SANS, color: TEXT_PRIMARY, gap: 8, maxWidth });
-  y += 27;
+  drawLine(ctx, x, y, title, { size: titleSize, weight: 700, family: SANS, color: TEXT_PRIMARY, gap: 8, maxWidth: maxWidth - reward });
+  y += titleH;
 
-  if (body.description) {
-    ctx.font = `400 13px ${SANS}`;
-    ctx.fillStyle = TEXT_SECONDARY;
-    for (const line of wrapText(ctx, body.description, maxWidth, 2)) {
-      ctx.fillText(line, x, y);
-      y += 17;
-    }
-    y += 5;
+  ctx.font = `400 13px ${SANS}`;
+  ctx.fillStyle = TEXT_SECONDARY;
+  for (const line of description) {
+    ctx.fillText(line, x, y);
+    y += 17;
   }
+  if (description.length) y += 5;
 
-  for (const line of body.lines ?? []) {
-    if (!line.some((seg) => seg && seg.text)) continue;
+  for (const line of lines) {
     drawLine(ctx, x, y, line, { size: 13, gap: 12, maxWidth });
     y += 21;
   }
 
-  return Math.max(y - 4, art ? BODY_TOP + size : 0);
+  return Math.max(y - 4, body.art ? BODY_TOP + size : 0);
 }

@@ -19,15 +19,12 @@ const cards: { name: string; data: MilestoneCardData }[] = [
     data: {
       user: USER,
       milestone: {
-        id: "m-1",
         title: "Sub-13s",
         description: "Achieve an accuracy of 13% or higher on a Tech Acc map.",
-        type: "milestone",
         tier: "gold",
+        iconGroup: "STREAK",
         xp: 500,
-        categoryId: "tech_acc",
       },
-      trigger: "first",
       title: "The first player ever to unlock this milestone!",
       accentColor: "#FFD700",
       category: { name: "Tech Acc", code: "tech_acc" },
@@ -39,14 +36,12 @@ const cards: { name: string; data: MilestoneCardData }[] = [
     data: {
       user: USER,
       milestone: {
-        id: "m-2",
         title: "Quintuple Crown",
         description: "Hold a top-5 rank in every category simultaneously.",
-        type: "achievement",
         tier: "platinum",
+        iconGroup: "RANK",
         xp: 1500,
       },
-      trigger: "rare",
       title: "Unlocked a rare achievement!",
       subtitle: "Only 0.42% of players have it",
       accentColor: "#9B59B6",
@@ -58,15 +53,12 @@ const cards: { name: string; data: MilestoneCardData }[] = [
     data: {
       user: USER,
       milestone: {
-        id: "m-3",
         title: "Diamond Accuracy",
         description: "Reach 99.5% average accuracy across all Standard Acc maps.",
-        type: "milestone",
         tier: "diamond",
+        iconGroup: "ACCURACY",
         xp: 2500,
-        categoryId: "standard_acc",
       },
-      trigger: "diamond_plus",
       title: "Unlocked a diamond milestone!",
       accentColor: "#5DADE2",
       category: { name: "Standard Acc", code: "standard_acc" },
@@ -78,14 +70,12 @@ const cards: { name: string; data: MilestoneCardData }[] = [
     data: {
       user: USER,
       milestone: {
-        id: "m-4",
         title: "Apex Predator",
         description: "Reach the #1 Overall ranking and hold it for a season.",
-        type: "achievement",
         tier: "apex",
+        iconGroup: "AP",
         xp: 10000,
       },
-      trigger: "diamond_plus",
       title: "Unlocked an apex achievement!",
       accentColor: "#5DADE2",
       level: 105,
@@ -96,14 +86,12 @@ const cards: { name: string; data: MilestoneCardData }[] = [
     data: {
       user: USER,
       milestone: {
-        id: "m-5",
         title: "First Steps",
         description: "Submit your first ranked score.",
-        type: "milestone",
         tier: "bronze",
+        iconGroup: "SCORE",
         xp: 50,
       },
-      trigger: "first",
       title: "The first player ever to unlock this milestone!",
       accentColor: "#FFD700",
       level: 2,
@@ -114,14 +102,12 @@ const cards: { name: string; data: MilestoneCardData }[] = [
     data: {
       user: USER,
       milestone: {
-        id: "m-6",
         title: "Marathon Runner",
         description: "Complete 1000 ranked maps.",
-        type: "achievement",
         tier: "silver",
+        iconGroup: "MAP",
         xp: 750,
       },
-      trigger: "rare",
       title: "Unlocked a rare achievement!",
       subtitle: "Only 0.91% of players have it",
       accentColor: "#9B59B6",
@@ -136,7 +122,6 @@ const setCards: { name: string; data: MilestoneSetCardData }[] = [
     data: {
       user: USER,
       set: {
-        id: "set-1",
         title: "Accuracy Foundations",
         description: "Complete every Bronze tier milestone in the Accuracy Foundations collection.",
         bonusXp: 2500,
@@ -151,7 +136,6 @@ const setCards: { name: string; data: MilestoneSetCardData }[] = [
     data: {
       user: USER,
       set: {
-        id: "set-2",
         title: "Apex Collection",
         description: "Achieve every Apex tier milestone across all categories.",
         bonusXp: 25000,
@@ -166,7 +150,6 @@ const setCards: { name: string; data: MilestoneSetCardData }[] = [
     data: {
       user: USER,
       set: {
-        id: "set-3",
         title: "Quickstart",
         bonusXp: 500,
       },

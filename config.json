@@ -55,7 +55,7 @@
         {
           "ap": 1000,
           "enabled": true,
-          "messageTemplate": "Reached 1000 AP for the first time {firstEverLabel}, that is four digits!"
+          "messageTemplate": "Reached 1000 AP for the first time {firstEverLabel}!"
         },
         {
           "ap": 1100,

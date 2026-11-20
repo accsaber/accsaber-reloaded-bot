@@ -25,6 +25,7 @@ export interface FeedCardData {
   complexity?: number;
   subtitle?: string;
   extraInfo?: string;
+  loud?: boolean;
 }
 
 interface FeedCardResult extends CardResult {
@@ -43,23 +44,25 @@ export async function renderFeedCard(data: FeedCardData): Promise<FeedCardResult
       title: data.title,
       titleColor: data.accentColor,
       subtitle: data.subtitle,
+      backdropUrl: data.loud ? score.coverUrl : null,
     }),
     loadOptionalImage(score.coverUrl),
   ]);
 
   const bottom = drawBody(ctx, {
     art: { img: cover },
+    loud: data.loud,
     title: [
       { text: score.songName },
       { ...difficultySegment(score.difficulty), size: 12, weight: 600 },
       data.complexity ? { text: data.complexity.toFixed(1), color: TEXT_TERTIARY, size: 12, weight: 500 } : null,
       { text: data.categoryName, color: catColor, size: 12, weight: 600 },
     ],
+    reward: { text: `${numberFmt(score.ap, 2)} AP`, color: TEXT_PRIMARY },
     description: `${score.songAuthor} · ${score.mapAuthor}`,
     lines: [
       [{ text: data.extraInfo ?? "" }],
       [
-        { text: `${numberFmt(score.ap, 2)} AP`, color: TEXT_PRIMARY, weight: 700 },
         { text: `${(score.accuracy * 100).toFixed(2)}%` },
         { text: `${numberFmt(score.weightedAp, 2)} weighted`, color: TEXT_TERTIARY },
       ],

@@ -128,11 +128,8 @@ export class MissionFeed {
         avatarUrl: payload.userAvatarUrl,
       },
       mission: {
-        id: payload.missionId,
         name: payload.templateName,
         description: payload.templateDescription,
-        type: payload.type,
-        pool: payload.pool,
         band: payload.band,
         xpAwarded: payload.xpAwarded,
       },

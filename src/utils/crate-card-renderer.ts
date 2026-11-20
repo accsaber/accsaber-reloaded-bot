@@ -1,5 +1,5 @@
 import type { ItemRarity } from "../types/api.js";
-import { type CardResult, type CardUser, TEXT_PRIMARY, TEXT_TERTIARY, drawBody, loadOptionalImage, numberFmt, openFeedCard } from "./canvas-utils.js";
+import { type CardResult, type CardUser, TEXT_TERTIARY, drawBody, loadOptionalImage, numberFmt, openFeedCard } from "./canvas-utils.js";
 import { playerUrl } from "./embeds.js";
 
 interface CrateCardModifier {
@@ -12,8 +12,6 @@ export interface CrateCardData {
   user: CardUser;
   crate: {
     name: string;
-    rarity: ItemRarity;
-    iconUrl?: string | null;
   };
   reward: {
     name: string;
@@ -82,17 +80,19 @@ export async function renderCrateCard(
       title: data.title,
       titleColor: accent,
       subtitle: data.subtitle,
+      backdropUrl: reward.iconUrl,
     }),
     loadOptionalImage(reward.iconUrl),
   ]);
 
   const bottom = drawBody(ctx, {
     art: { img: itemImg, fit: "contain", icon: reward.typeKey, color: accent },
-    artSize: 72,
+    loud: true,
     title: [
       { text: reward.name },
       reward.quantity > 1 && { text: `×${reward.quantity}`, color: TEXT_TERTIARY, size: 13, weight: 500 },
     ],
+    reward: worth > 0 && { text: `${numberFmt(worth, 0)} Essence`, color: accent },
     description: reward.description,
     lines: [
       [
@@ -100,7 +100,6 @@ export async function renderCrateCard(
         ...reward.modifiers
           .filter((m) => !HIDDEN_MODIFIERS.has(m.key))
           .map((m) => ({ text: m.name, color: /^#[0-9a-f]{6}$/i.test(m.colorHex?.trim() ?? "") ? m.colorHex!.trim() : undefined })),
-        worth > 0 && { text: `${numberFmt(worth, 0)} Essence`, color: TEXT_PRIMARY },
         reward.serialNumber != null && { text: `#${numberFmt(reward.serialNumber, 0)}`, color: TEXT_TERTIARY },
       ],
     ],

@@ -1,13 +1,11 @@
-import type { MilestoneTier, MilestoneType } from "../types/api.js";
-import { type CardResult, type CardUser, TEXT_PRIMARY, drawBody, numberFmt, openFeedCard } from "./canvas-utils.js";
+import type { MilestoneTier } from "../types/api.js";
+import { type CardResult, type CardUser, drawBody, numberFmt, openFeedCard } from "./canvas-utils.js";
 import { playerUrl } from "./embeds.js";
-
-export type MilestoneTriggerKind = "first" | "rare" | "diamond_plus";
+import { badgePainter, resolveBadgeTier } from "./milestone-badge.js";
 
 export interface MilestoneSetCardData {
   user: CardUser;
   set: {
-    id: string;
     title: string;
     description?: string;
     bonusXp: number;
@@ -21,15 +19,12 @@ export interface MilestoneSetCardData {
 export interface MilestoneCardData {
   user: CardUser;
   milestone: {
-    id: string;
     title: string;
     description?: string;
-    type: MilestoneType;
     tier: MilestoneTier;
+    iconGroup?: string;
     xp: number;
-    categoryId?: string;
   };
-  trigger: MilestoneTriggerKind;
   title: string;
   subtitle?: string;
   accentColor: string;
@@ -60,6 +55,7 @@ export async function renderMilestoneCard(
 ): Promise<CardResult> {
   const { user, milestone } = data;
   const tierHex = TIER_HEX[milestone.tier];
+  const badge = badgePainter(resolveBadgeTier(milestone.tier), milestone.iconGroup, tierHex);
 
   const { ctx, finish } = await openFeedCard({
     user,
@@ -67,18 +63,15 @@ export async function renderMilestoneCard(
     title: data.title,
     titleColor: data.accentColor,
     subtitle: data.subtitle,
+    backdropArt: badge,
   });
 
   const bottom = drawBody(ctx, {
-    art: { img: null, icon: milestone.type === "achievement" ? "trophy" : "flag", color: tierHex },
+    art: { img: null, paint: badge },
+    loud: true,
     title: milestone.title,
+    reward: { text: `${numberFmt(milestone.xp, 0)} XP`, color: tierHex },
     description: milestone.description,
-    lines: [
-      [
-        data.trigger !== "diamond_plus" && { text: TIER_LABEL[milestone.tier], color: tierHex },
-        { text: `${numberFmt(milestone.xp, 0)} XP`, color: TEXT_PRIMARY },
-      ],
-    ],
   });
 
   return { image: finish(bottom), profileUrl: playerUrl(user.id) };
@@ -88,6 +81,7 @@ export async function renderMilestoneSetCard(
   data: MilestoneSetCardData
 ): Promise<CardResult> {
   const { user, set, accentColor } = data;
+  const badge = badgePainter("gold", "MILESTONE", accentColor);
 
   const { ctx, finish } = await openFeedCard({
     user,
@@ -95,13 +89,15 @@ export async function renderMilestoneSetCard(
     title: data.title,
     titleColor: accentColor,
     subtitle: data.subtitle,
+    backdropArt: badge,
   });
 
   const bottom = drawBody(ctx, {
-    art: { img: null, icon: "stack", color: accentColor },
+    art: { img: null, paint: badge },
+    loud: true,
     title: set.title,
+    reward: { text: `${numberFmt(set.bonusXp, 0)} XP`, color: accentColor },
     description: set.description,
-    lines: [[{ text: `${numberFmt(set.bonusXp, 0)} bonus XP`, color: TEXT_PRIMARY }]],
   });
 
   return { image: finish(bottom), profileUrl: playerUrl(user.id) };

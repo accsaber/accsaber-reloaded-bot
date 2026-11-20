@@ -256,6 +256,7 @@ export class ScoreFeed {
         score,
         title: renderTemplate(overallMatched.messageTemplate, vars),
         accentColor: overallMatched.embedColor ?? firstMilestone.embedColor,
+        loud: true,
         categoryCode: category.code,
         categoryName: category.name,
       };
@@ -280,6 +281,7 @@ export class ScoreFeed {
       score,
       title: renderTemplate(catMatched.messageTemplate, vars),
       accentColor: catMatched.embedColor ?? firstMilestone.embedColor,
+      loud: true,
       categoryCode: category.code,
       categoryName: category.name,
     };
@@ -368,6 +370,7 @@ export class ScoreFeed {
       score,
       title: renderTemplate(this.cfg.rankOne.messageTemplate, vars),
       accentColor: this.cfg.rankOne.embedColor,
+      loud: true,
       categoryCode: category.code,
       categoryName: category.name,
       extraInfo,

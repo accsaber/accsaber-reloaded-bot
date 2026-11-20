@@ -371,30 +371,6 @@ function drawTrophy(ctx: Ctx, s: number): void {
   ctx.stroke();
 }
 
-function drawStack(ctx: Ctx, s: number): void {
-  ctx.lineWidth = 1.2 * s;
-
-  const plateW = 17 * s;
-  const plateH = 3.6 * s;
-  const radius = 1.6 * s;
-  const xStart = 3.5 * s;
-  const ys = [4.5 * s, 10.2 * s, 15.9 * s];
-
-  for (let i = 0; i < ys.length; i++) {
-    ctx.globalAlpha = i === 0 ? 0.6 : i === 1 ? 0.82 : 1;
-    ctx.beginPath();
-    ctx.roundRect(xStart, ys[i], plateW, plateH, radius);
-    ctx.closePath();
-    ctx.fill();
-  }
-  ctx.globalAlpha = 1;
-
-  ctx.beginPath();
-  ctx.moveTo(xStart + 0.5 * s, ys[2] + plateH + 2 * s);
-  ctx.lineTo(xStart + plateW - 0.5 * s, ys[2] + plateH + 2 * s);
-  ctx.stroke();
-}
-
 function drawTarget(ctx: Ctx, s: number): void {
   ctx.lineWidth = 2 * s;
   ctx.beginPath();
@@ -444,7 +420,6 @@ const ICONS: Record<string, IconDraw> = {
   profile_thumbnail_background: drawThumbnail,
   flag: drawFlag,
   trophy: drawTrophy,
-  stack: drawStack,
   target: drawTarget,
   sparkle: drawSparkle,
 };

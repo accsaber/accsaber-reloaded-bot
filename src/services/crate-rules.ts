@@ -80,8 +80,6 @@ export function buildCrateCardData(
     },
     crate: {
       name: open.crate.name,
-      rarity: open.crate.rarity,
-      iconUrl: open.crate.iconUrl,
     },
     reward: {
       name: reward.item.name,
