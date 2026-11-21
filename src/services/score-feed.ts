@@ -386,7 +386,7 @@ export class ScoreFeed {
     );
 
     const results = await Promise.all(
-      categoriesToCheck.map((cat) => this.checkTopRankForCategory(score, cat))
+      categoriesToCheck.map((cat) => this.checkTopRankForCategory(score, cat, scoreCategory))
     );
 
     return results.filter((e): e is FeedCardData => e !== null);
@@ -394,7 +394,8 @@ export class ScoreFeed {
 
   private async checkTopRankForCategory(
     score: ScoreResponse,
-    catConfig: TopRankCategoryConfig
+    catConfig: TopRankCategoryConfig,
+    mapCategory: { code: string; name: string }
   ): Promise<FeedCardData | null> {
     const { topRank } = this.cfg;
 
@@ -456,8 +457,8 @@ export class ScoreFeed {
         score,
         title: renderTemplate(topRank.detailMessageTemplate, vars),
         accentColor: accent,
-        categoryCode: catConfig.categoryCode,
-        categoryName: catName,
+        categoryCode: mapCategory.code,
+        categoryName: mapCategory.name,
         subtitle: renderTemplate(topRank.detailSubtitleTemplate, subtitleVars),
       };
     }
@@ -493,8 +494,8 @@ export class ScoreFeed {
       score,
       title: renderTemplate(best.messageTemplate, vars),
       accentColor: accent,
-      categoryCode: catConfig.categoryCode,
-      categoryName: catName,
+      categoryCode: mapCategory.code,
+      categoryName: mapCategory.name,
       subtitle: showPassed ? renderTemplate(topRank.thresholdSubtitleTemplate, subtitleVars) : undefined,
     };
   }
