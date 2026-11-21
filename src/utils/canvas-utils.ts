@@ -304,6 +304,7 @@ interface FeedBody {
   loud?: boolean;
   title: string | Line;
   reward?: Segment | null | false;
+  rewardNote?: string;
   description?: string | null;
   lines?: Line[];
 }
@@ -397,6 +398,12 @@ export function drawBody(ctx: Ctx, body: FeedBody): number {
   const reward = body.reward
     ? drawLine(ctx, FEED_RIGHT, y, [body.reward], { size: body.reward.size ?? titleSize, weight: 700, align: "right" }) + 16
     : 0;
+  if (body.reward && body.rewardNote) {
+    drawLine(ctx, FEED_RIGHT, y + (body.reward.size ?? titleSize) + 3, [{ text: body.rewardNote, color: TEXT_TERTIARY }], {
+      size: 12,
+      align: "right",
+    });
+  }
   const title = typeof body.title === "string" ? [{ text: body.title }] : body.title;
   drawLine(ctx, x, y, title, { size: titleSize, weight: 700, family: SANS, color: TEXT_PRIMARY, gap: 8, maxWidth: maxWidth - reward });
   y += titleH;

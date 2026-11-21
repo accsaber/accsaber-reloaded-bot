@@ -59,13 +59,11 @@ export async function renderFeedCard(data: FeedCardData): Promise<FeedCardResult
       { text: data.categoryName, color: catColor, size: 12, weight: 600 },
     ],
     reward: { text: `${numberFmt(score.ap, 2)} AP`, color: TEXT_PRIMARY, size: 28 },
+    rewardNote: `${numberFmt(score.weightedAp, 2)} weighted`,
     description: `${score.songAuthor} · ${score.mapAuthor}`,
     lines: [
       [{ text: data.extraInfo ?? "" }],
-      [
-        { text: `${(score.accuracy * 100).toFixed(2)}%` },
-        { text: `${numberFmt(score.weightedAp, 2)} weighted`, color: TEXT_TERTIARY },
-      ],
+      [{ text: `${(score.accuracy * 100).toFixed(2)}%` }],
     ],
   });
 
