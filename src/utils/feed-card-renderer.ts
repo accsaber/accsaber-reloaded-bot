@@ -52,18 +52,17 @@ export async function renderFeedCard(data: FeedCardData): Promise<FeedCardResult
   const bottom = drawBody(ctx, {
     art: { img: cover },
     loud: data.loud,
-    title: [
-      { text: score.songName },
-      { ...difficultySegment(score.difficulty), size: 12, weight: 600 },
-      data.complexity ? { text: data.complexity.toFixed(1), color: TEXT_TERTIARY, size: 12, weight: 500 } : null,
-      { text: data.categoryName, color: catColor, size: 12, weight: 600 },
-    ],
+    title: score.songName,
     reward: { text: `${numberFmt(score.ap, 2)} AP`, color: TEXT_PRIMARY, size: 28 },
-    rewardNote: `${numberFmt(score.weightedAp, 2)} weighted`,
+    rewardNote: `${(score.accuracy * 100).toFixed(2)}% · ${numberFmt(score.weightedAp, 2)} weighted`,
     description: `${score.songAuthor} · ${score.mapAuthor}`,
     lines: [
       [{ text: data.extraInfo ?? "" }],
-      [{ text: `${(score.accuracy * 100).toFixed(2)}%` }],
+      [
+        { text: data.categoryName, color: catColor, weight: 600 },
+        { ...difficultySegment(score.difficulty), weight: 600 },
+        data.complexity ? { text: data.complexity.toFixed(1), color: TEXT_TERTIARY } : null,
+      ],
     ],
   });
 
