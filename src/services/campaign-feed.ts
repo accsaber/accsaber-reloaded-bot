@@ -7,7 +7,7 @@ import {
   type TextChannel,
 } from "discord.js";
 import { getCampaignProgress } from "../api/campaigns.js";
-import { getCategoryCodeById, getCategoryNameById } from "../api/categories.js";
+import { getCategoryById } from "../api/categories.js";
 import { getUserLevel } from "../api/users.js";
 import { config } from "../config.js";
 import { feedChannel } from "./feed.js";
@@ -211,17 +211,7 @@ export class CampaignFeed {
   private async resolveCategory(
     categoryId: string | undefined
   ): Promise<{ name: string; code: string } | undefined> {
-    if (!categoryId) return undefined;
-    try {
-      const [code, name] = await Promise.all([
-        getCategoryCodeById(categoryId),
-        getCategoryNameById(categoryId),
-      ]);
-      if (!code || !name) return undefined;
-      return { code, name };
-    } catch {
-      return undefined;
-    }
+    return getCategoryById(categoryId).catch(() => undefined);
   }
 
   private pruneDedupe(): void {

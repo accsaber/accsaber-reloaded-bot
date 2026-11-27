@@ -1,7 +1,7 @@
 import type { MilestoneTier } from "../types/api.js";
 import { type CardResult, type CardUser, drawBody, numberFmt, openFeedCard } from "./canvas-utils.js";
 import { playerUrl } from "./embeds.js";
-import { badgePainter, resolveBadgeTier } from "./milestone-badge.js";
+import { badgePainter, resolveBadgeTier, resolveMilestoneGlyph } from "./milestone-badge.js";
 
 export interface MilestoneSetCardData {
   user: CardUser;
@@ -23,6 +23,7 @@ export interface MilestoneCardData {
     description?: string;
     tier: MilestoneTier;
     iconGroup?: string;
+    querySpec?: unknown;
     xp: number;
   };
   title: string;
@@ -55,7 +56,11 @@ export async function renderMilestoneCard(
 ): Promise<CardResult> {
   const { user, milestone } = data;
   const tierHex = TIER_HEX[milestone.tier];
-  const badge = badgePainter(resolveBadgeTier(milestone.tier), milestone.iconGroup, tierHex);
+  const badge = badgePainter(
+    resolveBadgeTier(milestone.tier),
+    resolveMilestoneGlyph(milestone.iconGroup, milestone.querySpec),
+    tierHex
+  );
 
   const { ctx, finish } = await openFeedCard({
     user,

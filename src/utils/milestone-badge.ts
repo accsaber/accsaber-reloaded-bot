@@ -66,6 +66,7 @@ interface GlyphSpec {
 const ROW = 5.8;
 const STACK = 4.6;
 const DECK = 1.9;
+const STAIR = 5.6;
 
 const SPECS: Record<string, GlyphSpec> = {
   AP: { mode: "nest", unit: "M12 3.8 20.2 12 12 20.2 3.8 12Z" },
@@ -88,6 +89,26 @@ const SPECS: Record<string, GlyphSpec> = {
   TRADE: { mode: "rotate", unit: "M12 10.8V5.2M10.2 7 12 5.1l1.8 1.9" },
   ESSENCE: { mode: "rotate", unit: "M12 11.2c.4-2.2.9-3.6 0-5.8-.9 2.2-.4 3.6 0 5.8Z", unitFill: true },
   GENERAL: { mode: "nest", unit: "M12 4 19.4 8.2v7.6L12 20 4.6 15.8V8.2Z" },
+
+  plays: { mode: "row", unit: "M10.3 9 15.1 12 10.3 15Z", unitFill: true, step: ROW },
+  plays_ap: { mode: "deck", unit: "M12 9 15 12 12 15 9 12Z", unitFill: true, step: DECK },
+  plays_rank: { mode: "row", unit: "M12 9.1 15 14.9H9Z", unitFill: true, step: ROW },
+  plays_score: { mode: "row", unit: "M14.6 12a2.6 2.6 0 1 1-5.2 0 2.6 2.6 0 1 1 5.2 0", unitFill: true, step: ROW },
+  plays_map: { mode: "deck", unit: "M9.6 9.6h4.8v4.8H9.6Z", step: DECK },
+  avg_acc: { mode: "stack", unit: "M9 12h6M12 10.6v2.8", step: STACK },
+  best_acc: { mode: "nest", unit: "M20 12a8 8 0 1 1-16 0 8 8 0 1 1 16 0" },
+  best_ap: { mode: "nest", unit: "M12 4 19.4 8.2v7.6L12 20 4.6 15.8V8.2Z" },
+  best_streak: { mode: "stack", unit: "M8.8 13.6 12 10.4 15.2 13.6", step: STACK },
+  pauses: { mode: "row", unit: "M10.5 9.2v5.6M13.5 9.2v5.6", step: ROW },
+  rank_best: { mode: "nest", unit: "M12 5 19.4 19H4.6Z" },
+  rank_country: { mode: "row", unit: "M10 15.4V8.6M10 9h4.4l-1 1.5 1 1.5h-4.4", step: ROW },
+  unique_maps: { mode: "deck", unit: "M9.6 9h3.2l1.6 1.6V15H9.6Z", step: DECK },
+  unique_diffs: { mode: "stack", unit: "M12 10.2 16 12 12 13.8 8 12Z", step: STACK },
+  resubmit: { mode: "deck", unit: "M8.8 13.9h3.2v-3.2h3.2", step: STAIR },
+  old_score: { mode: "row", unit: "M9.6 9.2h4.8l-4.8 2.8 4.8 2.8H9.6Z", step: ROW },
+  stamina: { mode: "stack", unit: "M8 12h1.6l1.2-1.8 1.6 3.6 1-1.8h2.6", step: STACK },
+  rock_bottom: { mode: "row", unit: "M12 9.2v4.6M10 12.2 12 14.2l2-2", step: ROW },
+  broken_streak: { mode: "stack", unit: "M8.8 10.4 12 13.6 15.2 10.4", step: STACK },
 };
 
 const STAR = "M18.6 2.6 19.5 4.8 21.8 5 20 6.5 20.6 8.8 18.6 7.5 16.6 8.8 17.2 6.5 15.4 5 17.7 4.8Z";
@@ -186,8 +207,8 @@ function modeParts(spec: GlyphSpec, count: number): GlyphPart[] {
   return repeatParts(spec, count);
 }
 
-function glyphParts(group: string | null | undefined, tier: BadgeTier): GlyphPart[] {
-  const spec = SPECS[group?.toUpperCase() ?? ""] ?? SPECS.GENERAL;
+function glyphParts(glyph: string, tier: BadgeTier): GlyphPart[] {
+  const spec = SPECS[glyph] ?? SPECS.GENERAL;
   const index = TIERS.indexOf(tier);
   if (spec.mode === "nest") return nestParts(spec, (index % 3) + 1, index >= 3);
 
@@ -219,9 +240,90 @@ export function resolveBadgeTier(raw: string | null | undefined): BadgeTier {
   return TIERS.includes(key) ? key : "bronze";
 }
 
-export function badgePainter(tier: BadgeTier, group: string | null | undefined, color: string): ArtPainter {
+interface QueryShape {
+  fn: string;
+  column: string;
+  filters: Set<string>;
+}
+
+function str(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function record(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : {};
+}
+
+function queryShape(spec: unknown): QueryShape {
+  const select = record(record(spec).select);
+  const filters = record(spec).filters;
+  return {
+    fn: str(select.function).toUpperCase(),
+    column: str(select.column),
+    filters: new Set(Array.isArray(filters) ? filters.map((f) => str(record(f).column)) : []),
+  };
+}
+
+const COUNT_FILTER_GLYPHS: [string, string][] = [
+  ["misses", "MISTAKE"],
+  ["streak_115", "broken_streak"],
+  ["pauses", "stamina"],
+  ["ap", "plays_ap"],
+  ["rank", "plays_rank"],
+  ["score", "plays_score"],
+  ["supersedes_reason", "resubmit"],
+  ["supersedes_time_set", "old_score"],
+  ["id", "plays_map"],
+];
+
+const SCORE_COLUMN_GLYPHS: Record<string, string> = {
+  ap: "best_ap",
+  weighted_ap: "best_ap",
+  streak_115: "best_streak",
+  pauses: "pauses",
+  rank: "rank_best",
+  rank_when_set: "rank_best",
+  misses: "MISTAKE",
+  bad_cuts: "MISTAKE",
+  bomb_hits: "MISTAKE",
+  wall_hits: "MISTAKE",
+};
+
+const STATS_COLUMN_GLYPHS: Record<string, string> = {
+  ranking: "RANK",
+  country_ranking: "rank_country",
+  ap: "AP",
+  average_ap: "AP",
+  average_acc: "avg_acc",
+};
+
+function scoreGlyph({ fn, column, filters }: QueryShape): string | undefined {
+  if (fn === "COUNT") {
+    if (filters.has("misses") && filters.has("streak_115")) return "rock_bottom";
+    return COUNT_FILTER_GLYPHS.find(([filter]) => filters.has(filter))?.[1] ?? "plays";
+  }
+  if (fn === "COUNT_DISTINCT") {
+    return column === "map_difficulty_difficulty" ? "unique_diffs" : "unique_maps";
+  }
+  if (column === "accuracy") return fn === "AVG" ? "avg_acc" : "best_acc";
+  return SCORE_COLUMN_GLYPHS[column];
+}
+
+export function resolveMilestoneGlyph(iconGroup: string | null | undefined, querySpec?: unknown): string {
+  const from = str(record(querySpec).from);
+  const shape = queryShape(querySpec);
+  const fine =
+    from === "scores"
+      ? scoreGlyph(shape)
+      : from === "user_category_statistics"
+        ? STATS_COLUMN_GLYPHS[shape.column]
+        : undefined;
+  return fine ?? iconGroup?.toUpperCase() ?? "GENERAL";
+}
+
+export function badgePainter(tier: BadgeTier, glyph: string, color: string): ArtPainter {
   const plate = mixHex(color, BG_SURFACE, 0.16);
-  return (ctx, x, y, size) => drawMilestoneBadge(ctx, x, y, size, tier, group, color, plate);
+  return (ctx, x, y, size) => drawMilestoneBadge(ctx, x, y, size, tier, glyph, color, plate);
 }
 
 function drawMilestoneBadge(
@@ -230,7 +332,7 @@ function drawMilestoneBadge(
   y: number,
   size: number,
   tier: BadgeTier,
-  group: string | null | undefined,
+  glyph: string,
   color: string,
   plate: string
 ): void {
@@ -263,7 +365,7 @@ function drawMilestoneBadge(
   const box = 100 * frame.glyphScale;
   ctx.translate((100 - box) / 2, (100 - box) / 2 + (frame.glyphDy ?? 0));
   ctx.scale(box / 24, box / 24);
-  for (const part of glyphParts(group, tier)) {
+  for (const part of glyphParts(glyph, tier)) {
     if (!part.d) continue;
     const path = new Path2D(part.d);
     ctx.save();

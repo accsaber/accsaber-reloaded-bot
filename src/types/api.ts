@@ -166,6 +166,7 @@ export interface MilestonePayloadEntry {
   type: MilestoneType;
   tier: MilestoneTier;
   iconGroup?: string;
+  querySpec?: unknown;
   xp: number;
 }
 

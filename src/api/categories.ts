@@ -14,16 +14,10 @@ export async function getCategories(): Promise<CategoryResponse[]> {
   return categories;
 }
 
-export async function getCategoryCodeById(
-  id: string
-): Promise<string | undefined> {
+export async function getCategoryById(
+  id: string | null | undefined
+): Promise<CategoryResponse | undefined> {
+  if (!id) return undefined;
   const categories = await getCategories();
-  return categories.find((c) => c.id === id)?.code;
-}
-
-export async function getCategoryNameById(
-  id: string
-): Promise<string | undefined> {
-  const categories = await getCategories();
-  return categories.find((c) => c.id === id)?.name;
+  return categories.find((c) => c.id === id);
 }

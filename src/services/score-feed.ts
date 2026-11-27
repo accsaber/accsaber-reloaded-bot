@@ -6,7 +6,7 @@ import {
   type Client,
   type TextChannel,
 } from "discord.js";
-import { getCategoryCodeById, getCategoryNameById } from "../api/categories.js";
+import { getCategoryById } from "../api/categories.js";
 import { getMapDifficultyComplexity, getMapLeaderboard, getUserHistoricScores, getUserScores } from "../api/scores.js";
 import { getCategoryLeaderboardAt, getUserCategoryStatistics, getUserStatsDiff } from "../api/statistics.js";
 import { getUserLevel } from "../api/users.js";
@@ -20,7 +20,7 @@ import { feedSearchLine, renderTemplate } from "../utils/templates.js";
 
 function commonVars(
   score: ScoreResponse,
-  categoryName: string
+  categoryName = ""
 ): Record<string, string | number> {
   return {
     playerName: score.userName,
@@ -35,12 +35,6 @@ function commonVars(
     streak115: score.streak115,
     score: score.score,
   };
-}
-
-async function resolveCategory(categoryId: string) {
-  const code = (await getCategoryCodeById(categoryId)) ?? "overall";
-  const name = (await getCategoryNameById(categoryId)) ?? "Overall";
-  return { code, name };
 }
 
 const STATS_POLL_INTERVAL = 300;
@@ -234,7 +228,7 @@ export class ScoreFeed {
       getUserScores(score.userId, { categoryId: score.categoryId, size: 2, sort: "ap,desc" }),
     ]);
 
-    const category = await resolveCategory(score.categoryId);
+    const category = await getCategoryById(score.categoryId);
 
     const overallTop = overallPage.content[0];
     const prevOverallAp = overallPage.content.length > 1 ? overallPage.content[1].ap : 0;
@@ -248,7 +242,7 @@ export class ScoreFeed {
       if (prevOnMap >= overallMatched.ap) return null;
 
       const vars = {
-        ...commonVars(score, category.name),
+        ...commonVars(score, category?.name),
         threshold: overallMatched.ap,
         firstEverLabel: "ever",
       };
@@ -257,8 +251,7 @@ export class ScoreFeed {
         title: renderTemplate(overallMatched.messageTemplate, vars),
         accentColor: overallMatched.embedColor ?? firstMilestone.embedColor,
         loud: true,
-        categoryCode: category.code,
-        categoryName: category.name,
+        category,
       };
     }
 
@@ -273,17 +266,16 @@ export class ScoreFeed {
     if (prevOnMap >= catMatched.ap) return null;
 
     const vars = {
-      ...commonVars(score, category.name),
+      ...commonVars(score, category?.name),
       threshold: catMatched.ap,
-      firstEverLabel: `in ${category.name}`,
+      firstEverLabel: category ? `in ${category.name}` : "ever",
     };
     return {
       score,
       title: renderTemplate(catMatched.messageTemplate, vars),
       accentColor: catMatched.embedColor ?? firstMilestone.embedColor,
       loud: true,
-      categoryCode: category.code,
-      categoryName: category.name,
+      category,
     };
   }
 
@@ -308,15 +300,14 @@ export class ScoreFeed {
     const { allScoresAbove } = this.cfg;
     if (score.ap < allScoresAbove.apThreshold) return null;
 
-    const category = await resolveCategory(score.categoryId);
-    const vars = commonVars(score, category.name);
+    const category = await getCategoryById(score.categoryId);
+    const vars = commonVars(score, category?.name);
 
     return {
       score,
       title: renderTemplate(allScoresAbove.messageTemplate, vars),
       accentColor: allScoresAbove.embedColor,
-      categoryCode: category.code,
-      categoryName: category.name,
+      category,
     };
   }
 
@@ -326,13 +317,14 @@ export class ScoreFeed {
     const { underdog } = this.cfg;
     if (score.rank > underdog.mapRankThreshold) return null;
 
-    const category = await resolveCategory(score.categoryId);
+    const category = await getCategoryById(score.categoryId);
+    if (!category) return null;
     const stats = await getUserCategoryStatistics(score.userId, category.code);
 
     if (stats.ranking < underdog.minCategoryRank) return null;
 
     const vars = {
-      ...commonVars(score, category.name),
+      ...commonVars(score, category?.name),
       categoryRank: stats.ranking,
     };
 
@@ -340,8 +332,7 @@ export class ScoreFeed {
       score,
       title: renderTemplate(underdog.messageTemplate, vars),
       accentColor: underdog.embedColor,
-      categoryCode: category.code,
-      categoryName: category.name,
+      category,
     };
   }
 
@@ -350,8 +341,8 @@ export class ScoreFeed {
   ): Promise<FeedCardData | null> {
     if (score.rank !== 1) return null;
 
-    const category = await resolveCategory(score.categoryId);
-    const vars = commonVars(score, category.name);
+    const category = await getCategoryById(score.categoryId);
+    const vars = commonVars(score, category?.name);
 
     let extraInfo: string | undefined;
     const leaderboard = await getMapLeaderboard(score.mapDifficultyId, {
@@ -371,18 +362,17 @@ export class ScoreFeed {
       title: renderTemplate(this.cfg.rankOne.messageTemplate, vars),
       accentColor: this.cfg.rankOne.embedColor,
       loud: true,
-      categoryCode: category.code,
-      categoryName: category.name,
+      category,
       extraInfo,
     };
   }
 
   private async checkTopRank(score: ScoreResponse): Promise<FeedCardData[]> {
     const { topRank } = this.cfg;
-    const scoreCategory = await resolveCategory(score.categoryId);
+    const scoreCategory = await getCategoryById(score.categoryId);
 
     const categoriesToCheck = topRank.categories.filter(
-      (c) => c.categoryCode === scoreCategory.code || c.categoryCode === "overall"
+      (c) => c.categoryCode === scoreCategory?.code || c.categoryCode === "overall"
     );
 
     const results = await Promise.all(
@@ -395,7 +385,7 @@ export class ScoreFeed {
   private async checkTopRankForCategory(
     score: ScoreResponse,
     catConfig: TopRankCategoryConfig,
-    mapCategory: { code: string; name: string }
+    mapCategory: { code: string; name: string } | undefined
   ): Promise<FeedCardData | null> {
     const { topRank } = this.cfg;
 
@@ -417,9 +407,7 @@ export class ScoreFeed {
       }
     }
 
-    const catName = catConfig.categoryCode === "overall"
-      ? "Overall"
-      : (await getCategoryNameById(stats.categoryId)) ?? catConfig.categoryCode;
+    const catName = (await getCategoryById(stats.categoryId))?.name ?? catConfig.categoryCode;
     const accent = catConfig.embedColor ?? CATEGORY_HEX[catConfig.categoryCode] ?? CATEGORY_HEX.overall;
     const isDetail = currentRank <= topRank.detailThreshold;
     const showPassed = currentRank <= topRank.passedThreshold;
@@ -457,8 +445,7 @@ export class ScoreFeed {
         score,
         title: renderTemplate(topRank.detailMessageTemplate, vars),
         accentColor: accent,
-        categoryCode: mapCategory.code,
-        categoryName: mapCategory.name,
+        category: mapCategory,
         subtitle: renderTemplate(topRank.detailSubtitleTemplate, subtitleVars),
       };
     }
@@ -494,8 +481,7 @@ export class ScoreFeed {
       score,
       title: renderTemplate(best.messageTemplate, vars),
       accentColor: accent,
-      categoryCode: mapCategory.code,
-      categoryName: mapCategory.name,
+      category: mapCategory,
       subtitle: showPassed ? renderTemplate(topRank.thresholdSubtitleTemplate, subtitleVars) : undefined,
     };
   }
@@ -505,22 +491,21 @@ export class ScoreFeed {
   ): Promise<FeedCardData | null> {
     const { streak } = this.cfg;
 
-    const category = await resolveCategory(score.categoryId);
+    const category = await getCategoryById(score.categoryId);
 
     const match = streak.categoryThresholds.find(
-      (ct) => ct.categoryCode === category.code
+      (ct) => ct.categoryCode === category?.code
     );
     if (!match) return null;
     if (score.streak115 < match.threshold) return null;
 
-    const vars = commonVars(score, category.name);
+    const vars = commonVars(score, category?.name);
 
     return {
       score,
       title: renderTemplate(streak.messageTemplate, vars),
       accentColor: streak.embedColor,
-      categoryCode: category.code,
-      categoryName: category.name,
+      category,
     };
   }
 }

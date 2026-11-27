@@ -6,7 +6,7 @@ import {
   type Client,
   type TextChannel,
 } from "discord.js";
-import { getCategoryCodeById, getCategoryNameById } from "../api/categories.js";
+import { getCategoryById } from "../api/categories.js";
 import { getUserLevel } from "../api/users.js";
 import { config } from "../config.js";
 import { feedChannel } from "./feed.js";
@@ -104,7 +104,7 @@ export class MissionFeed {
   ): Promise<MissionCardData> {
     const [levelResult, categoryResult] = await Promise.allSettled([
       getUserLevel(payload.userId),
-      payload.categoryId ? resolveCategory(payload.categoryId) : Promise.resolve(undefined),
+      getCategoryById(payload.categoryId),
     ]);
 
     const level = levelResult.status === "fulfilled" ? levelResult.value.level : undefined;
@@ -145,15 +145,4 @@ export class MissionFeed {
       if (entry.expiresAt < now) this.dedupe.delete(key);
     }
   }
-}
-
-async function resolveCategory(
-  categoryId: string
-): Promise<{ name: string; code: string } | undefined> {
-  const [code, name] = await Promise.all([
-    getCategoryCodeById(categoryId),
-    getCategoryNameById(categoryId),
-  ]);
-  if (!code || !name) return undefined;
-  return { code, name };
 }

@@ -6,7 +6,7 @@ import {
   type Client,
   type TextChannel,
 } from "discord.js";
-import { getCategoryCodeById, getCategoryNameById } from "../api/categories.js";
+import { getCategoryById } from "../api/categories.js";
 import {
   configureCompletionStatsCache,
   getCompletionStatsById,
@@ -334,7 +334,7 @@ export class MilestoneFeed {
   ): Promise<MilestoneCardData> {
     const [levelResult, categoryResult] = await Promise.allSettled([
       getUserLevel(payload.player.id),
-      milestone.categoryId ? resolveCategory(milestone.categoryId) : Promise.resolve(undefined),
+      getCategoryById(milestone.categoryId),
     ]);
 
     const level = levelResult.status === "fulfilled" ? levelResult.value.level : undefined;
@@ -353,6 +353,7 @@ export class MilestoneFeed {
         description: milestone.description,
         tier: milestone.tier,
         iconGroup: milestone.iconGroup,
+        querySpec: milestone.querySpec,
         xp: milestone.xp,
       },
       title: trigger.title,
@@ -394,15 +395,4 @@ export class MilestoneFeed {
   static tierRank(tier: MilestoneTier): number {
     return TIER_RANK[tier];
   }
-}
-
-async function resolveCategory(
-  categoryId: string
-): Promise<{ name: string; code: string } | undefined> {
-  const [code, name] = await Promise.all([
-    getCategoryCodeById(categoryId),
-    getCategoryNameById(categoryId),
-  ]);
-  if (!code || !name) return undefined;
-  return { code, name };
 }

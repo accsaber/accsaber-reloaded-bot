@@ -19,8 +19,7 @@ export interface FeedCardData {
   score: ScoreResponse;
   title: string;
   accentColor: string;
-  categoryCode: string;
-  categoryName: string;
+  category?: { code: string; name: string };
   level?: number;
   complexity?: number;
   subtitle?: string;
@@ -35,7 +34,7 @@ interface FeedCardResult extends CardResult {
 
 export async function renderFeedCard(data: FeedCardData): Promise<FeedCardResult> {
   const { score } = data;
-  const catColor = CATEGORY_HEX[data.categoryCode] ?? CATEGORY_HEX.overall;
+  const catColor = CATEGORY_HEX[data.category?.code ?? "overall"] ?? CATEGORY_HEX.overall;
 
   const [{ ctx, finish }, cover] = await Promise.all([
     openFeedCard({
@@ -59,7 +58,7 @@ export async function renderFeedCard(data: FeedCardData): Promise<FeedCardResult
     lines: [
       [{ text: data.extraInfo ?? "" }],
       [
-        { text: data.categoryName, color: catColor, weight: 600 },
+        data.category ? { text: data.category.name, color: catColor, weight: 600 } : null,
         { ...difficultySegment(score.difficulty), weight: 600 },
         data.complexity ? { text: data.complexity.toFixed(1), color: TEXT_TERTIARY } : null,
       ],
